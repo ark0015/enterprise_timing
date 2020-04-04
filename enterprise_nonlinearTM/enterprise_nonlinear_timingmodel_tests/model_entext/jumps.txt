@@ -1,0 +1,6 @@
+draw_from_red_prior 0.062
+covarianceJumpProposalAM 0.16
+DEJump 0.34
+draw_from_nmodel_prior 0.16
+draw_from_prior 0.031
+covarianceJumpProposalSCAM 0.25
