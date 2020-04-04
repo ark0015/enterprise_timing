@@ -14,8 +14,8 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 current_path = os.getcwd()
 splt_path = current_path.split("/")
 #top_path_idx = splt_path.index("akaiser")
-top_path_idx = splt_path.index("nanograv")
-#top_path_idx = splt_path.index("ark0015")
+#top_path_idx = splt_path.index("nanograv")
+top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
