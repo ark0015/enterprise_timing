@@ -14,8 +14,8 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 current_path = os.getcwd()
 splt_path = current_path.split("/")
 #top_path_idx = splt_path.index("akaiser")
-#top_path_idx = splt_path.index("nanograv")
-top_path_idx = splt_path.index("ark0015")
+top_path_idx = splt_path.index("nanograv")
+#top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -24,16 +24,19 @@ sys.path.insert(0, noise_path)
 sys.path.insert(0, e_e_path)
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
-from enterprise_extensions import models_2 as models
+from enterprise_extensions import models as models
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
-psrlist = ["J1640+2224"]  # J1643-1224 J1640+2224 J1909-3744
+psrlist = ["J2317+1439"]
+#psrlist = ["J1640+2224"]  # J1643-1224 J1640+2224 J1909-3744
 datarelease = "9yr"
-tm_prior = "bounded-normal"
+tm_prior = "uniform"
+white_vary = True
+red_var = True
 run_num = 1
 datadir = top_dir + "/{}".format(datarelease)
-outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_tm_{}/".format("_".join(tm_prior.split('-')),run_num)
+outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
 #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
 # outdir = current_path + "/chains/" + "messing_around/"
 
@@ -84,6 +87,8 @@ for psr in psrs:
     for par in psr.fitpars:
         if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
             pass
+        elif "FD" in ["".join(list(x)[0:2]) for x in par.split("_")][0]:
+            pass
         elif "JUMP" in ["".join(list(x)[0:4]) for x in par.split("_")][0]:
             pass
         elif par == "Offset":
@@ -94,11 +99,12 @@ for psr in psrs:
             pass
         else:
             tmparams_nodmx.append(par)
-# tmparam_list = [ 'PB', 'A1', 'XDOT', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
-# tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
+
+tmparam_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
+#tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
 #tmparam_list = tmparams_nodmx
 # tmparam_list = ["F0", "F1"]
-tmparam_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
+#tmparam_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
 print("Sampling these values:\n", tmparam_list, "\nin pulsar ", psrlist[0])
 print("Using ",tm_prior," prior.")
 
@@ -134,12 +140,12 @@ pta = models.model_general(
     dm_type="gp",
     dm_psd="powerlaw",
     dm_annual=False,
-    white_vary=False,
+    white_vary=white_vary,
     gequad=False,
     dm_chrom=False,
     dmchrom_psd="powerlaw",
     dmchrom_idx=4,
-    red_var=True,
+    red_var=red_var,
     red_select=None,
     red_breakflat=False,
     red_breakflat_fq=None,
