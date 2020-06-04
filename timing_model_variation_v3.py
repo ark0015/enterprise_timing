@@ -14,8 +14,8 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 current_path = os.getcwd()
 splt_path = current_path.split("/")
 #top_path_idx = splt_path.index("akaiser")
-top_path_idx = splt_path.index("nanograv")
-#top_path_idx = splt_path.index("ark0015")
+#top_path_idx = splt_path.index("nanograv")
+top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -31,10 +31,11 @@ import noise
 psrlist = ["J2317+1439"]
 #psrlist = ["J1640+2224"]  # J1643-1224 J1640+2224 J1909-3744
 datarelease = "9yr"
-tm_prior = "uniform"
+tm_prior = "bounded-normal"
 white_vary = True
 red_var = True
-run_num = 1
+run_num = 3
+resume = True
 datadir = top_dir + "/{}".format(datarelease)
 outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
 #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
@@ -164,6 +165,9 @@ tm_groups = sampler.get_timing_groups(pta)
 for tm_group in tm_groups:
     groups.append(tm_group)
 
+wn_pars = ['ecorr','equad','efac']
+groups.append(sampler.group_from_params(pta, wn_pars))
+
 psampler = ptmcmc(
     ndim,
     pta.get_lnlikelihood,
@@ -171,7 +175,7 @@ psampler = ptmcmc(
     cov,
     groups=groups,
     outDir=outdir,
-    resume=False,
+    resume=resume,
 )
 np.savetxt(outdir + "/pars.txt", list(map(str, pta.param_names)), fmt="%s")
 np.savetxt(
@@ -181,13 +185,13 @@ np.savetxt(
 )
 
 jp = JumpProposal(pta)
-psampler.addProposalToCycle(jp.draw_from_signal("timing_model"), 50)
+psampler.addProposalToCycle(jp.draw_from_signal("timing_model"), 30)
 for p in pta.params:
     for cat in ["pos", "pm", "spin", "kep", "gr"]:
         if cat in p.name.split("_"):
-            psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 80)
+            psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
 
 # sampler for N steps
-N = int(1e6)
+N = int(2e6)
 x0 = np.hstack(p.sample() for p in pta.params)
 psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50)

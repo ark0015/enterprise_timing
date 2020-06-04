@@ -12,9 +12,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-#top_path_idx = splt_path.index("nanograv")
+top_path_idx = splt_path.index("nanograv")
 #top_path_idx = splt_path.index("akaiser")
-top_path_idx = splt_path.index("ark0015")
+#top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -29,15 +29,15 @@ import noise
 
 psrlist = ["J2317+1439"]
 #psrlist = ["J1640+2224"]
-datarelease = '5yr'
+datarelease = '11yr'
 tm_prior = "uniform"
 white_vary = True
 red_var = True
-run_num = 3
+run_num = 1
 resume=True
 datadir = top_dir + "/{}".format(datarelease)
-outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
-#outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_bounded_normal_tm_3/"
+#outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
+outdir = current_path + "/chains/messing_around/{}/".format(datarelease) + psrlist[0] + "_testing_bounded_normal_tm_3/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
 timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
@@ -98,7 +98,7 @@ for psr in psrs:
             pass
         else:
             tmparams_nodmx.append(par)
-tmparam_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
+tmparam_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2']
 # tmparam_list = [ 'PB', 'A1', 'XDOT', 'TASC', 'EPS1', 'EPS2', 'H3', 'H4']
 # tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
 # tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
@@ -192,6 +192,7 @@ for p in pta.params:
         if cat in p.name.split("_"):
             psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
 
+print(s)
 # sampler for N steps
 N = int(2e6)
 x0 = np.hstack(p.sample() for p in pta.params)

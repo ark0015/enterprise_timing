@@ -29,15 +29,15 @@ import noise
 
 psrlist = ["J2317+1439"]
 #psrlist = ["J1640+2224"]
-datarelease = '5yr'
-tm_prior = "uniform"
+datarelease = '11yr'
+tm_prior = "bounded-normal"
 white_vary = True
 red_var = True
-run_num = 3
-resume=True
+run_num = 1
+resume = True
 datadir = top_dir + "/{}".format(datarelease)
 outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
-#outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_bounded_normal_tm_3/"
+#outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
 timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
@@ -98,6 +98,7 @@ for psr in psrs:
             pass
         else:
             tmparams_nodmx.append(par)
+
 tmparam_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
 # tmparam_list = [ 'PB', 'A1', 'XDOT', 'TASC', 'EPS1', 'EPS2', 'H3', 'H4']
 # tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
@@ -182,9 +183,7 @@ np.savetxt(
     list(map(lambda x: str(x.__repr__()), pta.params)),
     fmt="%s",
 )
-# sampler = e_e.sampler.setup_sampler(
-#    pta, outdir=outdir, resume=False, empirical_distr=None
-# )
+
 jp = JumpProposal(pta)
 psampler.addProposalToCycle(jp.draw_from_signal("timing_model"), 30)
 for p in pta.params:
