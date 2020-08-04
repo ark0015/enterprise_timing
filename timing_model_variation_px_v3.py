@@ -25,13 +25,14 @@ sys.path.insert(0, e_e_path)
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
 from enterprise_extensions import models_2 as models
+from enterprise_extensions.timing_2 import get_astrometric_priors
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
 #psrlist = ["J2317+1439"]
 #psrlist = ["J1640+2224"]  # J1643-1224 J1640+2224 J1909-3744
-#psrlist = ["J1713+0747"]
-psrlist = ["J2145-0750"]
+psrlist = ["J1713+0747"]
+#psrlist = ["J2145-0750"]
 
 datarelease = "9yr"
 tm_prior = "bounded-normal"
@@ -40,7 +41,7 @@ red_var = True
 run_num = 1
 resume = False
 datadir = top_dir + "/{}".format(datarelease)
-outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
+outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_RV_{}_WV_{}_PX_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
 #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
 # outdir = current_path + "/chains/" + "messing_around/"
 
@@ -72,8 +73,6 @@ else:
                     noisedict[new_key] = tmpnoisedict[og_key]
                 else:
                     noisedict[og_key] = tmpnoisedict[og_key]
-            else:
-                print('Pulsar ',psr_name, ' not in pulsar list.')
 
 # filter
 parfiles = [
@@ -114,16 +113,24 @@ for psr in psrs:
 # tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
 #tm_param_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
 tm_param_list = tm_params_nodmx
-print("Sampling these values: ", tm_param_list, "\n in pulsar ", psrlist[0])
+print("Sampling these values:\n", tm_param_list, "\nin pulsar ", psrlist[0])
+print("Using ",tm_prior," prior and astrometric priors.")
+px_priors = get_astrometric_priors(astrometric_px_file=top_dir+'/enterprise_timing/parallaxes.json')
 
-print("Using ",tm_prior," prior.")
+tm_val = float(px_priors[psrlist[0]]['PI'][0])
+tm_sigma = 2.0*max(float(px_priors[psrlist[0]]['eminus'][0]),float(px_priors[psrlist[0]]['eplus'][0]))
+tm_lower_bound = tm_val + 3.0*float(px_priors[psrlist[0]]['eminus'][0])
+tm_upper_bound = tm_val + 3.0*float(px_priors[psrlist[0]]['eplus'][0])
+
+tm_param_dict = {'PX':{'prior_mu':tm_val,'prior_sigma':tm_sigma,
+                    'prior_lower_bound':tm_lower_bound,'prior_upper_bound':tm_upper_bound}}
 
 pta = models.model_general(
     psrs,
     tm_var=True,
     tm_linear=False,
     tm_param_list=tm_param_list,
-    tm_param_dict={},
+    tm_param_dict=tm_param_dict,
     tm_prior=tm_prior,
     common_psd="powerlaw",
     red_psd="powerlaw",
@@ -187,7 +194,6 @@ psampler = ptmcmc(
     outDir=outdir,
     resume=resume,
 )
-
 np.savetxt(outdir + "/pars.txt", list(map(str, pta.param_names)), fmt="%s")
 np.savetxt(
     outdir + "/priors.txt",

@@ -24,20 +24,23 @@ sys.path.insert(0, noise_path)
 sys.path.insert(0, e_e_path)
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
-from enterprise_extensions import models as models
+from enterprise_extensions import models_2 as models
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
-psrlist = ["J2317+1439"]
+#psrlist = ["J2317+1439"]
 #psrlist = ["J1640+2224"]  # J1643-1224 J1640+2224 J1909-3744
+#psrlist = ["J1713+0747"]
+psrlist = ["J2145-0750"]
+
 datarelease = "9yr"
 tm_prior = "uniform"
 white_vary = True
 red_var = True
-run_num = 3
-resume = True
+run_num = 1
+resume = False
 datadir = top_dir + "/{}".format(datarelease)
-outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
+outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
 # outdir = current_path + "/chains/" + "messing_around/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
@@ -59,16 +62,17 @@ else:
         tmpnoisedict = {}
         tmpnoisedict = noise.get_noise_from_file(noisefile)
         for og_key in tmpnoisedict.keys():
-            if list(og_key)[0] != 'J':
-                new_key = 'J' + og_key
-            else:
-                new_key = og_key
-            if new_key.split('_')[0] in psrlist:
+            split_key = og_key.split('_')
+            psr_name = split_key[0]
+            if psr_name in psrlist:
                 if datarelease in ['5yr']:
-                    noisedict["_".join(og_key.split("-"))] = tmpnoisedict[og_key]
+                    param = "_".join(split_key[1:])
+                    new_key = "_".join([psr_name,"_".join(param.split("-"))])
+                    noisedict[new_key] = tmpnoisedict[og_key]
                 else:
                     noisedict[og_key] = tmpnoisedict[og_key]
-
+            else:
+                print('Pulsar ',psr_name, ' not in pulsar list.')
 # filter
 parfiles = [
     x for x in parfiles if x.split("/")[-1].split(".")[0].split("_")[0] in psrlist
@@ -82,7 +86,7 @@ for p, t in zip(parfiles, timfiles):
     psr = Pulsar(p, t, ephem="DE436", clk=None, drop_t2pulsar=False)
     psrs.append(psr)
 
-tmparams_nodmx = []
+tm_params_nodmx = []
 for psr in psrs:
     for par in psr.fitpars:
         if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
@@ -91,27 +95,32 @@ for psr in psrs:
             pass
         elif "JUMP" in ["".join(list(x)[0:4]) for x in par.split("_")][0]:
             pass
-        elif par == "Offset":
+        elif par in ["Offset","TASC"]:
             pass
         elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
             pass
-        elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
+        elif par in ["F0"]:
             pass
+        #elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
+        #    pass
         else:
-            tmparams_nodmx.append(par)
-tmparam_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
-#tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
-#tmparam_list = tmparams_nodmx
-#tmparam_list = ["F0", "F1"]
-#tmparam_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
-print("Sampling these values:\n", tmparam_list, "\nin pulsar ", psrlist[0])
+            tm_params_nodmx.append(par)
+#tm_param_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
+# tm_param_list = [ 'PB', 'A1', 'XDOT', 'TASC', 'EPS1', 'EPS2', 'H3', 'H4']
+# tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
+# tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
+#tm_param_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
+tm_param_list = tm_params_nodmx
+print("Sampling these values: ", tm_param_list, "\n in pulsar ", psrlist[0])
+
 print("Using ", tm_prior, " prior.")
 
 pta = models.model_general(
     psrs,
     tm_var=True,
     tm_linear=False,
-    tmparam_list=tmparam_list,
+    tm_param_list=tm_param_list,
+    tm_param_dict={},
     tm_prior=tm_prior,
     common_psd="powerlaw",
     red_psd="powerlaw",

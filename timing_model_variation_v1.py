@@ -12,9 +12,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-top_path_idx = splt_path.index("nanograv")
+#top_path_idx = splt_path.index("nanograv")
 #top_path_idx = splt_path.index("akaiser")
-#top_path_idx = splt_path.index("ark0015")
+top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -23,20 +23,24 @@ sys.path.insert(0, noise_path)
 sys.path.insert(0, e_e_path)
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
-from enterprise_extensions import models as models
+from enterprise_extensions import models_2 as models
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
-psrlist = ["J1744-1134"]
+#psrlist = ["J1744-1134"]
 #psrlist = ["J1640+2224"]
+#psrlist = ["J2317+1439"]
+#psrlist = ["J1713+0747"]
+psrlist = ["J2145-0750"]
+
 datarelease = '5yr'
 tm_prior = "bounded-normal"
 white_vary = True
 red_var = True
-run_num = 3
-resume = True
+run_num = 1
+resume = False
 datadir = top_dir + "/{}".format(datarelease)
-outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
+outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
 #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
@@ -58,15 +62,17 @@ else:
         tmpnoisedict = {}
         tmpnoisedict = noise.get_noise_from_file(noisefile)
         for og_key in tmpnoisedict.keys():
-            if list(og_key)[0] != 'J':
-                new_key = 'J' + og_key
-            else:
-                new_key = og_key
-            if new_key.split('_')[0] in psrlist:
+            split_key = og_key.split('_')
+            psr_name = split_key[0]
+            if psr_name in psrlist:
                 if datarelease in ['5yr']:
-                    noisedict["_".join(og_key.split("-"))] = tmpnoisedict[og_key]
+                    param = "_".join(split_key[1:])
+                    new_key = "_".join([psr_name,"_".join(param.split("-"))])
+                    noisedict[new_key] = tmpnoisedict[og_key]
                 else:
                     noisedict[og_key] = tmpnoisedict[og_key]
+            else:
+                print('Pulsar ',psr_name, ' not in pulsar list.')
 
 # filter
 parfiles = [
@@ -81,7 +87,7 @@ for p, t in zip(parfiles, timfiles):
     psr = Pulsar(p, t, ephem="DE436", clk=None, drop_t2pulsar=False)
     psrs.append(psr)
 
-tmparams_nodmx = []
+tm_params_nodmx = []
 for psr in psrs:
     for par in psr.fitpars:
         if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
@@ -99,22 +105,24 @@ for psr in psrs:
         #elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
         #    pass
         else:
-            tmparams_nodmx.append(par)
+            tm_params_nodmx.append(par)
 
-#tmparam_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
-# tmparam_list = [ 'PB', 'A1', 'XDOT', 'TASC', 'EPS1', 'EPS2', 'H3', 'H4']
-# tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
-# tmparam_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
-#tmparam_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
-tmparam_list = tmparams_nodmx
-print("Sampling these values: ", tmparam_list, "\n in pulsar ", psrlist[0])
+#tm_param_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
+# tm_param_list = [ 'PB', 'A1', 'XDOT', 'TASC', 'EPS1', 'EPS2', 'H3', 'H4']
+# tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
+# tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
+#tm_param_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
+tm_param_list = tm_params_nodmx
+print("Sampling these values: ", tm_param_list, "\n in pulsar ", psrlist[0])
+
 print("Using ",tm_prior," prior.")
-print(s)
+
 pta = models.model_general(
     psrs,
     tm_var=True,
     tm_linear=False,
-    tmparam_list=tmparam_list,
+    tm_param_list=tm_param_list,
+    tm_param_dict={},
     tm_prior=tm_prior,
     common_psd="powerlaw",
     red_psd="powerlaw",
@@ -179,6 +187,7 @@ psampler = ptmcmc(
     outDir=outdir,
     resume=resume,
 )
+
 np.savetxt(outdir + "/pars.txt", list(map(str, pta.param_names)), fmt="%s")
 np.savetxt(
     outdir + "/priors.txt",

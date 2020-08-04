@@ -1,0 +1,3283 @@
+{
+    "J0030+0451": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "3.3"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2006ApJ...642.1012L"
+        ],
+        "Refname": [
+            "Lommen et al. (2006)"
+        ],
+        "eminus": [
+            "-0.9"
+        ],
+        "eplus": [
+            "+0.9"
+        ]
+    },
+    "J0034-0721": {
+        "BName": "B0031-07",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.93"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.07"
+        ],
+        "eplus": [
+            "+0.08"
+        ]
+    },
+    "J0040+5716": {
+        "BName": "B0037+56",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.102"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.025"
+        ],
+        "eplus": [
+            "+0.051"
+        ]
+    },
+    "J0045-7319": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.040"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.060"
+        ],
+        "eplus": [
+            "+0.060"
+        ]
+    },
+    "J0055+5117": {
+        "BName": "B0052+51",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.35"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.06"
+        ],
+        "eplus": [
+            "+0.06"
+        ]
+    },
+    "J0102+6537": {
+        "BName": "B0059+65",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.40"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0108+6608": {
+        "BName": "B0105+65",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.47"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.03"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0108-1431": {
+        "BName": "None",
+        "Method": [
+            "VLBI (LBA)"
+        ],
+        "PI": [
+            "4.2"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...701.1243D"
+        ],
+        "Refname": [
+            "Deller et al. (2009)"
+        ],
+        "eminus": [
+            "-1.4"
+        ],
+        "eplus": [
+            "+1.4"
+        ]
+    },
+    "J0139+5814": {
+        "BName": "B0136+57",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.37"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0147+5922": {
+        "BName": "B0144+59",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.49"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.09"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0151-0635": {
+        "BName": "B0148-06",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.22"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.08"
+        ],
+        "eplus": [
+            "+0.10"
+        ]
+    },
+    "J0152-1637": {
+        "BName": "B0149-16",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.44"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.18"
+        ],
+        "eplus": [
+            "+0.21"
+        ]
+    },
+    "J0157+6212": {
+        "BName": "B0154+61",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.554"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.024"
+        ],
+        "eplus": [
+            "+0.039"
+        ]
+    },
+    "J0218+4232": {
+        "BName": "None",
+        "Method": [
+            "VLBI (EVN)"
+        ],
+        "PI": [
+            "0.16"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2014ApJ...782L..38D"
+        ],
+        "Refname": [
+            "Du et al. (2014)"
+        ],
+        "eminus": [
+            "-0.09"
+        ],
+        "eplus": [
+            "+0.09"
+        ]
+    },
+    "J0323+3944": {
+        "BName": "B0320+39",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "1.05"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0332+5434": {
+        "BName": "B0329+54",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (VLBA)",
+            "VLBI (ad hoc)"
+        ],
+        "PI": [
+            "0.595",
+            "0.91",
+            "1.3"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046",
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/1979Natur.280..477S"
+        ],
+        "Refname": [
+            "Deller et al. (2018)",
+            "Brisken et al. (2002)",
+            "Salter et al. (1979)"
+        ],
+        "eminus": [
+            "-0.025",
+            "-0.11",
+            "-1.7"
+        ],
+        "eplus": [
+            "+0.020",
+            "+0.11",
+            "+1.7"
+        ]
+    },
+    "J0335+4555": {
+        "BName": "B0331+45",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.409"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.027"
+        ],
+        "eplus": [
+            "+0.022"
+        ]
+    },
+    "J0337+1715": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.73"
+        ],
+        "RefURL": [
+            "https://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.24"
+        ],
+        "eplus": [
+            "+0.24"
+        ]
+    },
+    "J0357+5236": {
+        "BName": "B0353+52",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.305"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.077"
+        ],
+        "eplus": [
+            "+0.029"
+        ]
+    },
+    "J0358+5413": {
+        "BName": "B0355+54",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.91"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2004ApJ...604..339C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2004)"
+        ],
+        "eminus": [
+            "-0.16"
+        ],
+        "eplus": [
+            "+0.16"
+        ]
+    },
+    "J0406+6138": {
+        "BName": "B0402+61",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.22"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.06"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J0437-4715": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)",
+            "VLBI (LBA)",
+            "Timing",
+            "Timing",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "8.33",
+            "6.396",
+            "6.65",
+            "6.3",
+            "7.1",
+            "5.6"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J",
+            "http://adsabs.harvard.edu/abs/2008ApJ...685L..67D",
+            "http://adsabs.harvard.edu/abs/2008ApJ...679..675V",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H",
+            "http://adsabs.harvard.edu/abs/2001Natur.412..158V",
+            "http://adsabs.harvard.edu/abs/1997ApJ...478L..95S"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)",
+            "Deller et al. (2008)",
+            "Verbiest et al. (2008)",
+            "Hotan et al. (2006)",
+            "van Straten et al. (2001)",
+            "Sandhu et al. (1997)"
+        ],
+        "eminus": [
+            "-0.67",
+            "-0.054",
+            "-0.51",
+            "-0.1",
+            "-0.14",
+            "-0.8"
+        ],
+        "eplus": [
+            "+0.67",
+            "+0.054",
+            "+0.51",
+            "+0.1",
+            "+0.14",
+            "+0.8"
+        ]
+    },
+    "J0452-1759": {
+        "BName": "B0450-18",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.65"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.6"
+        ],
+        "eplus": [
+            "+1.4"
+        ]
+    },
+    "J0454+5543": {
+        "BName": "B0450+55",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.84"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.05"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0538+2817": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.72",
+            "0.68"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C",
+            "http://adsabs.harvard.edu/abs/2007ApJ...654..487N"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)",
+            "Ng et al. (2007)"
+        ],
+        "eminus": [
+            "-0.09",
+            "-0.15"
+        ],
+        "eplus": [
+            "+0.12",
+            "+0.15"
+        ]
+    },
+    "J0601-0527": {
+        "BName": "B0559-05",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.48"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0613-0200": {
+        "BName": "None",
+        "Method": [
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "0.8",
+            "2.1"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)",
+            "Hotan et al. (2006)"
+        ],
+        "eminus": [
+            "-0.35",
+            "-0.6"
+        ],
+        "eplus": [
+            "+0.35",
+            "+0.6"
+        ]
+    },
+    "J0614+2229": {
+        "BName": "B0611+22",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.282"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.031"
+        ],
+        "eplus": [
+            "+0.022"
+        ]
+    },
+    "J0629+2415": {
+        "BName": "B0626+24",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.33"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.05"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J0630-2834": {
+        "BName": "B0628-28",
+        "Method": [
+            "VLBI (LBA)"
+        ],
+        "PI": [
+            "3.0"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...701.1243D"
+        ],
+        "Refname": [
+            "Deller et al. (2009)"
+        ],
+        "eminus": [
+            "-0.4"
+        ],
+        "eplus": [
+            "+0.4"
+        ]
+    },
+    "J0633+1746": {
+        "BName": "Geminga",
+        "Method": [
+            "Optical (HST WFPC2)",
+            "Optical (HST ACS)"
+        ],
+        "PI": [
+            "6.4",
+            "4.0"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/1996ApJ...461L..91C",
+            "http://adsabs.harvard.edu/abs/2007Ap%26SS.308..225F"
+        ],
+        "Refname": [
+            "Caraveo et al. (1996)",
+            "Faherty et al. (2007)"
+        ],
+        "eminus": [
+            "-1.8",
+            "-1.3"
+        ],
+        "eplus": [
+            "+1.8",
+            "+1.3"
+        ]
+    },
+    "J0636+5129": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "4.9"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2014ApJ...791...67S"
+        ],
+        "Refname": [
+            "Stovall et al. (2014)"
+        ],
+        "eminus": [
+            "-0.6"
+        ],
+        "eplus": [
+            "+0.6"
+        ]
+    },
+    "J0645+5158": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "1.4"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2014ApJ...791...67S"
+        ],
+        "Refname": [
+            "Stovall et al. (2014)"
+        ],
+        "eminus": [
+            "-0.4"
+        ],
+        "eplus": [
+            "+0.4"
+        ]
+    },
+    "J0659+1414": {
+        "BName": "B0656+14",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "3.47"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2003ApJ...593L..89B"
+        ],
+        "Refname": [
+            "Brisken et al. (2003)"
+        ],
+        "eminus": [
+            "-0.36"
+        ],
+        "eplus": [
+            "+0.36"
+        ]
+    },
+    "J0720-3125": {
+        "BName": "None",
+        "Method": [
+            "Optical (HST)"
+        ],
+        "PI": [
+            "2.77"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2007ApJ...660.1428K"
+        ],
+        "Refname": [
+            "Kaplan et al. (2007)"
+        ],
+        "eminus": [
+            "-0.89"
+        ],
+        "eplus": [
+            "+0.89"
+        ]
+    },
+    "J0729-1836": {
+        "BName": "B0727-18",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.49"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.08"
+        ],
+        "eplus": [
+            "+0.10"
+        ]
+    },
+    "J0737-3039A/B": {
+        "BName": "None",
+        "Method": [
+            "VLBI (LBA)",
+            "Timing"
+        ],
+        "PI": [
+            "0.87",
+            "3.0"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009Sci...323.1327D",
+            "http://adsabs.harvard.edu/abs/2006Sci...314...97K"
+        ],
+        "Refname": [
+            "Deller et al. (2009)",
+            "Kramer et al. (2006)"
+        ],
+        "eminus": [
+            "-0.14",
+            "-2.0"
+        ],
+        "eplus": [
+            "+0.14",
+            "+2.0"
+        ]
+    },
+    "J0751+1807": {
+        "BName": "None",
+        "Method": [
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "0.66",
+            "1.6"
+        ],
+        "RefURL": [
+            "http://dx.doi.org/10.1051/0004-6361/201527847",
+            "http://adsabs.harvard.edu/abs/2005ApJ...634.1242N"
+        ],
+        "Refname": [
+            "Guillemot et al. (2016)",
+            "Nice et al. (2005)"
+        ],
+        "eminus": [
+            "-0.15",
+            "-0.8"
+        ],
+        "eplus": [
+            "+0.15",
+            "+0.8"
+        ]
+    },
+    "J0814+7429": {
+        "BName": "B0809+74",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (ad hoc)"
+        ],
+        "PI": [
+            "2.31",
+            "1.8"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/1979Natur.280..477S"
+        ],
+        "Refname": [
+            "Brisken et al. (2002)",
+            "Salter et al. (1979)"
+        ],
+        "eminus": [
+            "-0.04",
+            "-7.1"
+        ],
+        "eplus": [
+            "+0.04",
+            "+7.1"
+        ]
+    },
+    "J0820-1350": {
+        "BName": "B0818-13",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.51"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.03"
+        ]
+    },
+    "J0823+0159": {
+        "BName": "B0820+02",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.38"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.07"
+        ],
+        "eplus": [
+            "+0.13"
+        ]
+    },
+    "J0826+2637": {
+        "BName": "B0823+26",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (ad hoc)"
+        ],
+        "PI": [
+            "2.010",
+            "2.8"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046",
+            "http://adsabs.harvard.edu/abs/1986AJ.....91..338G"
+        ],
+        "Refname": [
+            "Deller et al. (2018)",
+            "Gwinn et al. (1986)"
+        ],
+        "eminus": [
+            "-0.009",
+            "-0.6"
+        ],
+        "eplus": [
+            "+0.013",
+            "+0.6"
+        ]
+    },
+    "J0835-4510": {
+        "BName": "B0833-45",
+        "Method": [
+            "VLBI (LBA)",
+            "Optical (HST)"
+        ],
+        "PI": [
+            "3.5",
+            "3.4"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2003ApJ...596.1137D",
+            "http://adsabs.harvard.edu/abs/2001ApJ...561..930C"
+        ],
+        "Refname": [
+            "Dodson et al. (2003)",
+            "Caraveo et al. (2001)"
+        ],
+        "eminus": [
+            "-0.2",
+            "-0.7"
+        ],
+        "eplus": [
+            "+0.2",
+            "+0.7"
+        ]
+    },
+    "J0922+0638": {
+        "BName": "B0919+06",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.83",
+            "0.31"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2001ApJ...550..287C",
+            "http://adsabs.harvard.edu/abs/1999AJ....117.3025F"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2001)",
+            "Fomalont et al. (1999)"
+        ],
+        "eminus": [
+            "-0.13",
+            "-0.14"
+        ],
+        "eplus": [
+            "+0.13",
+            "+0.14"
+        ]
+    },
+    "J0953+0755": {
+        "BName": "B0950+08",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (VLBA)",
+            "VLBI (ad hoc)",
+            "VLBI (ad hoc)"
+        ],
+        "PI": [
+            "3.82",
+            "3.6",
+            "7.9",
+            "8.3"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/2000ApJ...541..959B",
+            "http://adsabs.harvard.edu/abs/1986AJ.....91..338G",
+            "http://adsabs.harvard.edu/abs/1979Natur.280..477S"
+        ],
+        "Refname": [
+            "Brisken et al. (2002)",
+            "Brisken et al. (2000)",
+            "Gwinn et al. (1986)",
+            "Salter et al. (1979)"
+        ],
+        "eminus": [
+            "-0.07",
+            "-0.3",
+            "-0.8",
+            "-8.8"
+        ],
+        "eplus": [
+            "+0.07",
+            "+0.3",
+            "+0.8",
+            "+8.8"
+        ]
+    },
+    "J1012+5307": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)",
+            "Timing"
+        ],
+        "PI": [
+            "1.33",
+            "1.22"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J",
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..805L"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)",
+            "Lazaridis et al. (2009)"
+        ],
+        "eminus": [
+            "-0.41",
+            "-0.26"
+        ],
+        "eplus": [
+            "+0.41",
+            "+0.26"
+        ]
+    },
+    "J1017-7156": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "3.9"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/doi/10.1093/mnras/stu067"
+        ],
+        "Refname": [
+            "Ng et al. (2014)"
+        ],
+        "eminus": [
+            "-1.2"
+        ],
+        "eplus": [
+            "+1.2"
+        ]
+    },
+    "J1022+1001": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)",
+            "Timing",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "1.387",
+            "1.8",
+            "2.5",
+            "3.3"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046",
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H",
+            "http://adsabs.harvard.edu/abs/2004MNRAS.355..941H"
+        ],
+        "Refname": [
+            "Deller et al. (2018)",
+            "Verbiest et al. (2009)",
+            "Hotan et al. (2006)",
+            "Hotan et al. (2004)"
+        ],
+        "eminus": [
+            "-0.028",
+            "-0.3",
+            "-0.4",
+            "-0.8"
+        ],
+        "eplus": [
+            "+0.041",
+            "+0.3",
+            "+0.4",
+            "+0.8"
+        ]
+    },
+    "J1023+0038": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)",
+            "VLBI (LBA)"
+        ],
+        "PI": [
+            "0.73",
+            "0.731"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J",
+            "http://adsabs.harvard.edu/abs/2012ApJ...756L..25D"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)",
+            "Deller et al. (2012)"
+        ],
+        "eminus": [
+            "-0.14",
+            "-0.022"
+        ],
+        "eplus": [
+            "+0.14",
+            "+0.022"
+        ]
+    },
+    "J1024-0719": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "0.53",
+            "0.89",
+            "1.9"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J",
+            "http://dx.doi.org/10.1051/0004-6361/201527847",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)",
+            "Guillemot et al. (2016)",
+            "Hotan et al. (2006)"
+        ],
+        "eminus": [
+            "-0.42",
+            "-0.14",
+            "-0.8"
+        ],
+        "eplus": [
+            "+0.42",
+            "+0.14",
+            "+0.8"
+        ]
+    },
+    "J1045-4509": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "3.3"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)"
+        ],
+        "eminus": [
+            "-1.9"
+        ],
+        "eplus": [
+            "+1.9"
+        ]
+    },
+    "J1048+2339": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.96"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.80"
+        ],
+        "eplus": [
+            "+0.80"
+        ]
+    },
+    "J1136+1551": {
+        "BName": "B1133+16",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "2.687",
+            "2.8"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046",
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B"
+        ],
+        "Refname": [
+            "Deller et al. (2018)",
+            "Brisken et al. (2002)"
+        ],
+        "eminus": [
+            "-0.016",
+            "-0.16"
+        ],
+        "eplus": [
+            "+0.018",
+            "+0.16"
+        ]
+    },
+    "J1227-4853": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.62"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.16"
+        ],
+        "eplus": [
+            "+0.16"
+        ]
+    },
+    "J1239+2453": {
+        "BName": "B1237+25",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (ad hoc)"
+        ],
+        "PI": [
+            "1.16",
+            "-6.2"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/1979Natur.280..477S"
+        ],
+        "Refname": [
+            "Brisken et al. (2002)",
+            "Salter et al. (1979)"
+        ],
+        "eminus": [
+            "-0.08",
+            "-5.2"
+        ],
+        "eplus": [
+            "+0.08",
+            "+5.2"
+        ]
+    },
+    "J1257-1027": {
+        "BName": "B1254-10",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.14"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.09"
+        ],
+        "eplus": [
+            "+0.06"
+        ]
+    },
+    "J1300+1240": {
+        "BName": "B1257+12",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "1.3"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2000ApJ...540L..41W"
+        ],
+        "Refname": [
+            "Wolszczan et al. (2000)"
+        ],
+        "eminus": [
+            "-0.4"
+        ],
+        "eplus": [
+            "+0.4"
+        ]
+    },
+    "J1302-6350": {
+        "BName": "B1259-63",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.418"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.030"
+        ],
+        "eplus": [
+            "+0.030"
+        ]
+    },
+    "J1321+8323": {
+        "BName": "B1322+83",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.97"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.14"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J1417-4402": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.221"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.071"
+        ],
+        "eplus": [
+            "+0.071"
+        ]
+    },
+    "J1431-4715": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.64"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.16"
+        ],
+        "eplus": [
+            "+0.16"
+        ]
+    },
+    "J1455-3330": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "0.99"
+        ],
+        "RefURL": [
+            "http://dx.doi.org/10.1051/0004-6361/201527847"
+        ],
+        "Refname": [
+            "Guillemot et al. (2016)"
+        ],
+        "eminus": [
+            "-0.22"
+        ],
+        "eplus": [
+            "+0.22"
+        ]
+    },
+    "J1456-6843": {
+        "BName": "B1451-68",
+        "Method": [
+            "VLBI"
+        ],
+        "PI": [
+            "2.2"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/1990Natur.343..240B"
+        ],
+        "Refname": [
+            "Bailes et al. (1990)"
+        ],
+        "eminus": [
+            "-0.3"
+        ],
+        "eplus": [
+            "+0.3"
+        ]
+    },
+    "J1509+5531": {
+        "BName": "B1508+55",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.47",
+            "0.415"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C",
+            "http://adsabs.harvard.edu/abs/2005ApJ...630L..61C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)",
+            "Chatterjee et al. (2005)"
+        ],
+        "eminus": [
+            "-0.03",
+            "-0.037"
+        ],
+        "eplus": [
+            "+0.03",
+            "+0.037"
+        ]
+    },
+    "J1532+2745": {
+        "BName": "B1530+27",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.62"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.10"
+        ],
+        "eplus": [
+            "+0.03"
+        ]
+    },
+    "J1537+1155": {
+        "BName": "B1534+12",
+        "Method": [
+            "Pbdot, GR, Gal potn.",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "0.96",
+            "0.98",
+            "0.913"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2014arXiv1402.4836F",
+            "http://adsabs.harvard.edu/abs/2002ApJ...581..501S",
+            "http://adsabs.harvard.edu/abs/1998ApJ...505..352S"
+        ],
+        "Refname": [
+            "Fonseca et al. (2014)",
+            "Stairs et al. (2002)",
+            "Stairs et al. (1998)"
+        ],
+        "eminus": [
+            "-0.01",
+            "-0.05",
+            "-0.14"
+        ],
+        "eplus": [
+            "+0.01",
+            "+0.05",
+            "+0.02"
+        ]
+    },
+    "J1543+0929": {
+        "BName": "B1541+09",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.13"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.02"
+        ],
+        "eplus": [
+            "+0.02"
+        ]
+    },
+    "J1543-0620": {
+        "BName": "B1540-06",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.322"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.045"
+        ],
+        "eplus": [
+            "+0.028"
+        ]
+    },
+    "J1559-4438": {
+        "BName": "B1556-44",
+        "Method": [
+            "VLBI (LBA)"
+        ],
+        "PI": [
+            "0.384"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...690..198D"
+        ],
+        "Refname": [
+            "Deller et al. (2009)"
+        ],
+        "eminus": [
+            "-0.081"
+        ],
+        "eplus": [
+            "+0.081"
+        ]
+    },
+    "J1600-3053": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "0.2"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)"
+        ],
+        "eminus": [
+            "-0.15"
+        ],
+        "eplus": [
+            "+0.15"
+        ]
+    },
+    "J1607-0032": {
+        "BName": "B1604-00",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.910"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.046"
+        ],
+        "eplus": [
+            "+0.029"
+        ]
+    },
+    "J1614-2230": {
+        "BName": "None",
+        "Method": [
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "1.30",
+            "1.54"
+        ],
+        "RefURL": [
+            "http://dx.doi.org/10.1051/0004-6361/201527847",
+            "http://adsabs.harvard.edu/abs/2013ApJS..208...17A"
+        ],
+        "Refname": [
+            "Guillemot et al. (2016)",
+            "Lassus (2013) in Fermi 2PC"
+        ],
+        "eminus": [
+            "-0.09",
+            "-0.10"
+        ],
+        "eplus": [
+            "+0.09",
+            "+0.10"
+        ]
+    },
+    "J1623-0908": {
+        "BName": "B1620-09",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.59"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.10"
+        ],
+        "eplus": [
+            "+0.10"
+        ]
+    },
+    "J1628-3205": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "1.20"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.56"
+        ],
+        "eplus": [
+            "+0.56"
+        ]
+    },
+    "J1643-1224": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "2.2"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)"
+        ],
+        "eminus": [
+            "-0.4"
+        ],
+        "eplus": [
+            "+0.4"
+        ]
+    },
+    "J1645-0317": {
+        "BName": "B1642-03",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.252"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.019"
+        ],
+        "eplus": [
+            "+0.028"
+        ]
+    },
+    "J1650-1654": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "-0.089"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.015"
+        ],
+        "eplus": [
+            "+0.031"
+        ]
+    },
+    "J1703-1846": {
+        "BName": "B1700-18",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.35"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.05"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J1713+0747": {
+        "BName": "None",
+        "Method": [
+            "Timing",
+            "VLBI (VLBA)",
+            "Timing",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "0.94",
+            "0.95",
+            "1.1",
+            "0.89",
+            "0.9"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H",
+            "http://adsabs.harvard.edu/abs/2005ApJ...620..405S",
+            "http://adsabs.harvard.edu/abs/1994ApJ...437L..39C"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)",
+            "Chatterjee et al. (2009)",
+            "Hotan et al. (2006)",
+            "Splaver et al. (2005)",
+            "Camilo et al. (1994)"
+        ],
+        "eminus": [
+            "-0.05",
+            "-0.05",
+            "-0.05",
+            "-0.08",
+            "-0.3"
+        ],
+        "eplus": [
+            "+0.05",
+            "+0.06",
+            "+0.05",
+            "+0.08",
+            "+0.3"
+        ]
+    },
+    "J1723-2837": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "1.077"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.054"
+        ],
+        "eplus": [
+            "+0.054"
+        ]
+    },
+    "J1730-2304": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "1.19"
+        ],
+        "RefURL": [
+            "http://dx.doi.org/10.1051/0004-6361/201527847"
+        ],
+        "Refname": [
+            "Guillemot et al. (2016)"
+        ],
+        "eminus": [
+            "-0.27"
+        ],
+        "eplus": [
+            "+0.27"
+        ]
+    },
+    "J1735-0724": {
+        "BName": "B1732-07",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.15"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.04"
+        ]
+    },
+    "J1738+0333": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "0.68"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2012MNRAS.423.3328F"
+        ],
+        "Refname": [
+            "Freire et al. (2012)"
+        ],
+        "eminus": [
+            "-0.05"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J1741-0840": {
+        "BName": "B1738-08",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.28"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.06"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J1744-1134": {
+        "BName": "None",
+        "Method": [
+            "Timing",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "2.4",
+            "2.1",
+            "2.8"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H",
+            "http://adsabs.harvard.edu/abs/1999ApJ...523L.171T"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)",
+            "Hotan et al. (2006)",
+            "Toscano et al. (1999)"
+        ],
+        "eminus": [
+            "-0.1",
+            "-0.2",
+            "-0.3"
+        ],
+        "eplus": [
+            "+0.1",
+            "+0.2",
+            "+0.3"
+        ]
+    },
+    "J1754+5201": {
+        "BName": "B1753+52",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.160"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.022"
+        ],
+        "eplus": [
+            "+0.029"
+        ]
+    },
+    "J1810+1744": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "1.05"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.69"
+        ],
+        "eplus": [
+            "+0.69"
+        ]
+    },
+    "J1816+4510": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.22"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.15"
+        ],
+        "eplus": [
+            "+0.15"
+        ]
+    },
+    "J1820-0427": {
+        "BName": "B1818-04",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.35"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.06"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J1833-0338": {
+        "BName": "B1831-03",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.41"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.07"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J1840+5640": {
+        "BName": "B1839+56",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.657"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.008"
+        ],
+        "eplus": [
+            "+0.065"
+        ]
+    },
+    "J1853+1303": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "1.0"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2011ApJ...743..102G"
+        ],
+        "Refname": [
+            "Gonzalez et al. (2011)"
+        ],
+        "eminus": [
+            "-0.6"
+        ],
+        "eplus": [
+            "+0.6"
+        ]
+    },
+    "J1856-3754": {
+        "BName": "None",
+        "Method": [
+            "Optical (HST)",
+            "Optical (HST)",
+            "Optical (HST)",
+            "Optical (HST)"
+        ],
+        "PI": [
+            "6.2",
+            "8.5",
+            "7.0",
+            "16.5"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2007Ap%26SS.308..191V",
+            "http://adsabs.harvard.edu/abs/2002ApJ...576L.145W",
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..447K",
+            "http://adsabs.harvard.edu/abs/2001ApJ...549..433W"
+        ],
+        "Refname": [
+            "van Kerkwijk &amp; Kaplan (2007)",
+            "Walter &amp; Lattimer (2002)",
+            "Kaplan et al. (2002)",
+            "Walter (2001)"
+        ],
+        "eminus": [
+            "-0.6",
+            "-0.9",
+            "-2.0",
+            "-2.3"
+        ],
+        "eplus": [
+            "+0.6",
+            "+0.9",
+            "+2.0",
+            "+2.3"
+        ]
+    },
+    "J1857+0943": {
+        "BName": "B1855+09",
+        "Method": [
+            "Timing",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "1.1",
+            "1.1",
+            "1.2"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/1994ApJ...428..713K",
+            "http://adsabs.harvard.edu/abs/1991ApJ...371..739R"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)",
+            "Kaspi et al. (1994)",
+            "Ryba &amp; Taylor (1991)"
+        ],
+        "eminus": [
+            "-0.2",
+            "-0.3",
+            "-0.5"
+        ],
+        "eplus": [
+            "+0.2",
+            "+0.3",
+            "+0.5"
+        ]
+    },
+    "J1900-2600": {
+        "BName": "B1857-26",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.5"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/1999AJ....117.3025F"
+        ],
+        "Refname": [
+            "Fomalont et al. (1999)"
+        ],
+        "eminus": [
+            "-0.6"
+        ],
+        "eplus": [
+            "+0.6"
+        ]
+    },
+    "J1901-0906": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.51"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.07"
+        ]
+    },
+    "J1909-3744": {
+        "BName": "None",
+        "Method": [
+            "Timing",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "0.79",
+            "0.88",
+            "0.88"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H",
+            "http://adsabs.harvard.edu/abs/2005ApJ...629L.113J"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)",
+            "Hotan et al. (2006)",
+            "Jacoby et al. (2005)"
+        ],
+        "eminus": [
+            "-0.02",
+            "-0.02",
+            "-0.03"
+        ],
+        "eplus": [
+            "+0.02",
+            "+0.02",
+            "+0.03"
+        ]
+    },
+    "J1912+2104": {
+        "BName": "B1910+20",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.024"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.022"
+        ],
+        "eplus": [
+            "+0.171"
+        ]
+    },
+    "J1913+1400": {
+        "BName": "B1911+13",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.185"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.023"
+        ],
+        "eplus": [
+            "+0.027"
+        ]
+    },
+    "J1917+1353": {
+        "BName": "B1915+13",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.142"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.007"
+        ],
+        "eplus": [
+            "+0.068"
+        ]
+    },
+    "J1919+0021": {
+        "BName": "B1917+00",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.16"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J1932+1059": {
+        "BName": "B1929+10",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (VLBA)",
+            "Timing"
+        ],
+        "PI": [
+            "2.77",
+            "3.02",
+            "5.0"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2004ApJ...604..339C",
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/1995PhDT.........5C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2004)",
+            "Brisken et al. (2002)",
+            "Camilo (1995)"
+        ],
+        "eminus": [
+            "-0.07",
+            "-0.09",
+            "-1.5"
+        ],
+        "eplus": [
+            "+0.07",
+            "+0.09",
+            "+1.5"
+        ]
+    },
+    "J1935+1616": {
+        "BName": "B1933+16",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.22"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.12"
+        ],
+        "eplus": [
+            "+0.08"
+        ]
+    },
+    "J1937+2544": {
+        "BName": "B1935+25",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.318"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.029"
+        ],
+        "eplus": [
+            "+0.031"
+        ]
+    },
+    "J1939+2134": {
+        "BName": "B1937+21",
+        "Method": [
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "0.13",
+            "0.12"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/1994ApJ...428..713K"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)",
+            "Kaspi et al. (1994)"
+        ],
+        "eminus": [
+            "-0.065",
+            "-0.08"
+        ],
+        "eplus": [
+            "+0.065",
+            "+0.08"
+        ]
+    },
+    "J1957+2516": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.69"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.86"
+        ],
+        "eplus": [
+            "+0.86"
+        ]
+    },
+    "J2006-0807": {
+        "BName": "B2003-08",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.424"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.101"
+        ],
+        "eplus": [
+            "+0.010"
+        ]
+    },
+    "J2010-1323": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.48"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.12"
+        ],
+        "eplus": [
+            "+0.17"
+        ]
+    },
+    "J2017+0603": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "1.2"
+        ],
+        "RefURL": [
+            "http://dx.doi.org/10.1051/0004-6361/201527847"
+        ],
+        "Refname": [
+            "Guillemot et al. (2016)"
+        ],
+        "eminus": [
+            "-0.5"
+        ],
+        "eplus": [
+            "+0.5"
+        ]
+    },
+    "J2018+2839": {
+        "BName": "B2016+28",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI"
+        ],
+        "PI": [
+            "1.03",
+            "0.9"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/1979Natur.280..477S"
+        ],
+        "Refname": [
+            "Brisken et al. (2002)",
+            "Salter et al. (1979)"
+        ],
+        "eminus": [
+            "-0.1",
+            "-3.6"
+        ],
+        "eplus": [
+            "+0.1",
+            "+3.6"
+        ]
+    },
+    "J2022+2854": {
+        "BName": "B2020+28",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI"
+        ],
+        "PI": [
+            "0.37",
+            "-1.3"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/1979Natur.280..477S"
+        ],
+        "Refname": [
+            "Brisken et al. (2002)",
+            "Salter et al. (1979)"
+        ],
+        "eminus": [
+            "-0.12",
+            "-4.6"
+        ],
+        "eplus": [
+            "+0.12",
+            "+4.6"
+        ]
+    },
+    "J2022+5154": {
+        "BName": "B2021+51",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI",
+            "VLBI"
+        ],
+        "PI": [
+            "0.5",
+            "0.95",
+            "1.8"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2002ApJ...571..906B",
+            "http://adsabs.harvard.edu/abs/1996ApJ...461L..95C",
+            "http://adsabs.harvard.edu/abs/1979Natur.280..477S"
+        ],
+        "Refname": [
+            "Brisken et al. (2002)",
+            "Campbell et al. (1996)",
+            "Salter et al. (1979)"
+        ],
+        "eminus": [
+            "-0.07",
+            "-0.37",
+            "-4.9"
+        ],
+        "eplus": [
+            "+0.07",
+            "+0.37",
+            "+4.9"
+        ]
+    },
+    "J2032+4127": {
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.693"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.033"
+        ],
+        "eplus": [
+            "+0.033"
+        ]
+    },
+    "J2046+1540": {
+        "BName": "B2044+15",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.31"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.08"
+        ],
+        "eplus": [
+            "+0.08"
+        ]
+    },
+    "J2046-0421": {
+        "BName": "B2043-04",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.167"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.042"
+        ],
+        "eplus": [
+            "+0.026"
+        ]
+    },
+    "J2048-1616": {
+        "BName": "B2045-16",
+        "Method": [
+            "VLBI (VLBA)",
+            "VLBI (LBA)"
+        ],
+        "PI": [
+            "1.05",
+            "1.71"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C",
+            "http://adsabs.harvard.edu/abs/2009ApJ...701.1243D"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)",
+            "Deller et al. (2009)"
+        ],
+        "eminus": [
+            "-0.02",
+            "-0.91"
+        ],
+        "eplus": [
+            "+0.03",
+            "+0.91"
+        ]
+    },
+    "J2055+3630": {
+        "BName": "B2053+36",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.17"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.03"
+        ],
+        "eplus": [
+            "+0.03"
+        ]
+    },
+    "J2113+2754": {
+        "BName": "B2110+27",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.704"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.022"
+        ],
+        "eplus": [
+            "+0.023"
+        ]
+    },
+    "J2113+4644": {
+        "BName": "B2111+46",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.45"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.07"
+        ],
+        "eplus": [
+            "+0.08"
+        ]
+    },
+    "J2124-3358": {
+        "BName": "None",
+        "Method": [
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "3.1",
+            "4.0"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/2006MNRAS.369.1502H"
+        ],
+        "Refname": [
+            "Verbiest et al. (2009)",
+            "Hotan et al. (2006)"
+        ],
+        "eminus": [
+            "-0.55",
+            "-2.0"
+        ],
+        "eplus": [
+            "+0.55",
+            "+2.0"
+        ]
+    },
+    "J2129-5721": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)",
+            "Timing"
+        ],
+        "PI": [
+            "0.424",
+            "1.9"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J",
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)",
+            "Verbiest et al. (2009)"
+        ],
+        "eminus": [
+            "-0.088",
+            "-0.9"
+        ],
+        "eplus": [
+            "+0.088",
+            "+0.9"
+        ]
+    },
+    "J2144-3933": {
+        "BName": "None",
+        "Method": [
+            "VLBI (LBA)"
+        ],
+        "PI": [
+            "6.05"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...701.1243D"
+        ],
+        "Refname": [
+            "Deller et al. (2009)"
+        ],
+        "eminus": [
+            "-0.56"
+        ],
+        "eplus": [
+            "+0.56"
+        ]
+    },
+    "J2145-0750": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)",
+            "Timing",
+            "Timing"
+        ],
+        "PI": [
+            "1.603",
+            "1.6",
+            "2.0"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046",
+            "http://adsabs.harvard.edu/abs/2009MNRAS.400..951V",
+            "http://adsabs.harvard.edu/abs/2004A%26A...426..631L"
+        ],
+        "Refname": [
+            "Deller et al. (2018)",
+            "Verbiest et al. (2009)",
+            "L&ouml;hmer et al. (2004)"
+        ],
+        "eminus": [
+            "-0.009",
+            "-0.25",
+            "-0.6"
+        ],
+        "eplus": [
+            "+0.063",
+            "+0.25",
+            "+0.6"
+        ]
+    },
+    "J2149+6329": {
+        "BName": "B2148+63",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.36"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.06"
+        ],
+        "eplus": [
+            "+0.07"
+        ]
+    },
+    "J2150+5247": {
+        "BName": "B2148+52",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.03"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.08"
+        ],
+        "eplus": [
+            "+0.16"
+        ]
+    },
+    "J2157+4017": {
+        "BName": "B2154+40",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.28"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.06"
+        ],
+        "eplus": [
+            "+0.06"
+        ]
+    },
+    "J2212+2933": {
+        "BName": "B2210+29",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.27"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.12"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J2214+3000": {
+        "BName": "None",
+        "Method": [
+            "Timing"
+        ],
+        "PI": [
+            "1.7"
+        ],
+        "RefURL": [
+            "http://dx.doi.org/10.1051/0004-6361/201527847"
+        ],
+        "Refname": [
+            "Guillemot et al. (2016)"
+        ],
+        "eminus": [
+            "-0.9"
+        ],
+        "eplus": [
+            "+0.9"
+        ]
+    },
+    "J2215+5135": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.28"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.36"
+        ],
+        "eplus": [
+            "+0.36"
+        ]
+    },
+    "J2222-0137": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "3.742"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2013ApJ...770..145D"
+        ],
+        "Refname": [
+            "Deller et al. (2013)"
+        ],
+        "eminus": [
+            "-0.016"
+        ],
+        "eplus": [
+            "+0.013"
+        ]
+    },
+    "J2225+6535": {
+        "BName": "B2224+65",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "1.20"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.20"
+        ],
+        "eplus": [
+            "+0.17"
+        ]
+    },
+    "J2248-0101": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.26"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.07"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J2305+3100": {
+        "BName": "B2303+30",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.223"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.028"
+        ],
+        "eplus": [
+            "+0.033"
+        ]
+    },
+    "J2313+4253": {
+        "BName": "B2310+42",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.93"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2009ApJ...698..250C"
+        ],
+        "Refname": [
+            "Chatterjee et al. (2009)"
+        ],
+        "eminus": [
+            "-0.07"
+        ],
+        "eplus": [
+            "+0.06"
+        ]
+    },
+    "J2317+1439": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.60"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.24"
+        ],
+        "eplus": [
+            "+1.53"
+        ]
+    },
+    "J2317+2149": {
+        "BName": "B2315+21",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.51"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.05"
+        ],
+        "eplus": [
+            "+0.06"
+        ]
+    },
+    "J2325+6316": {
+        "BName": "B2323+63",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "-0.01"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.05"
+        ]
+    },
+    "J2339-0533": {
+        "BName": "None",
+        "Method": [
+            "(Gaia DR2)"
+        ],
+        "PI": [
+            "0.75"
+        ],
+        "RefURL": [
+            "http://adsabs.harvard.edu/abs/2018arXiv180606076J"
+        ],
+        "Refname": [
+            "Jennings et al. (2018)"
+        ],
+        "eminus": [
+            "-0.25"
+        ],
+        "eplus": [
+            "+0.25"
+        ]
+    },
+    "J2346-0609": {
+        "BName": "None",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.275"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.036"
+        ],
+        "eplus": [
+            "+0.021"
+        ]
+    },
+    "J2354+6155": {
+        "BName": "B2351+61",
+        "Method": [
+            "VLBI (VLBA)"
+        ],
+        "PI": [
+            "0.41"
+        ],
+        "RefURL": [
+            "https://arxiv.org/abs/1808.09046"
+        ],
+        "Refname": [
+            "Deller et al. (2018)"
+        ],
+        "eminus": [
+            "-0.04"
+        ],
+        "eplus": [
+            "+0.03"
+        ]
+    }
+}
