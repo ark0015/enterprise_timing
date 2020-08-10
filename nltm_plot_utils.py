@@ -113,7 +113,7 @@ def get_chaindir_indices(chaindir_list):
             chaindir_indices['misc'][dataset].append(i)
     return chaindir_indices
 
-def get_chain_tmparam_lists(chaindir_list):
+def get_chain_tmparam_lists(chaindir_list,burn=None):
     """separates list of chains by priors, puts corresponding indices in a list in a dictionary
     :chaindir_list:
         list, list of chain locations
@@ -126,10 +126,14 @@ def get_chain_tmparam_lists(chaindir_list):
         tmp_tmparam.extend(('lnlike','lnprior', 'chain accept', 'pt chain accept'))
         tmparam_list.append(tmp_tmparam)
         chain = pd.read_csv(chaindir + '/chain_1.txt', sep='\t', dtype=float, header=None).values
-        burn = int(0.25 * chain.shape[0])
+        if not isinstance(burn,int):
+            if burn is None:
+                burn = int(0.25 * chain.shape[0])
+            else:
+                burn = int(burn)
         chain_list.append(chain[burn:])
 
-def get_chain_tmparam_dict(chaindir_list):
+def get_chain_tmparam_dict(chaindir_list,burn=None):
     """separates list of chains by priors, puts corresponding chains and timing params
          in a list in a dictionary.
     :chaindir_list:
@@ -146,7 +150,7 @@ def get_chain_tmparam_dict(chaindir_list):
 
     chain_dict['misc'] = {}
 
-    for i,chaindir in enumerate(chaindir_list):
+    for chaindir in chaindir_list:
         sep = chaindir.split('/')
         dataset = sep[8]
         name = sep[-1]
@@ -154,7 +158,13 @@ def get_chain_tmparam_dict(chaindir_list):
         tmp_tmparam.extend(np.loadtxt(chaindir + '/pars.txt',dtype='S').astype('U'))
         tmp_tmparam.extend(('lnlike','lnprior', 'chain accept', 'pt chain accept'))
         chain = pd.read_csv(chaindir + '/chain_1.txt', sep='\t', dtype=float, header=None).values
-        burn = int(0.25 * chain.shape[0])
+
+        if not isinstance(burn,int):
+            if burn is None:
+                burn = int(0.25 * chain.shape[0])
+            else:
+                burn = int(burn)
+
         if 'uniform' in name.split('_') and not 'timing' in name.split('_'):
             if 'PX' in name.split('_'):
                 if dataset not in chain_dict['uniform']['px_priors'].keys():
@@ -185,6 +195,40 @@ def get_chain_tmparam_dict(chaindir_list):
         print('\r'+dataset + ' ' + name + ' Loaded.      ')
     return chain_dict
 
+def get_trimmed_chain_tmparam_dict(chain_dict):
+    """Makes all chains in chain_dict the same length
+    """
+    trimmed_chain_dict = {}
+    i=0
+    for prior, prior_dict in chain_dict.items():
+        for px_prior, px_prior_dict in prior_dict.items():
+            for dataset in chain_dict['bounded']['other'].keys():
+                for chain in chain_dict[prior][px_prior][dataset]['chains']:
+                    if i == 0:
+                        min_chain_len_idx = (np.shape(chain)[0],i)
+                    else:
+                        if np.shape(chain)[0] < min_chain_len_idx[0]:
+                            min_chain_len_idx = (np.shape(chain)[0],i)
+                    i += 1
+    i=0
+    for prior, prior_dict in chain_dict.items():
+        trimmed_chain_dict[prior] = {}
+        for px_prior, px_prior_dict in prior_dict.items():
+            trimmed_chain_dict[prior][px_prior] = {}
+            for dataset in chain_dict[prior][px_prior].keys():
+                if dataset not in trimmed_chain_dict[prior][px_prior].keys():
+                    trimmed_chain_dict[prior][px_prior][dataset] = defaultdict(list)
+                for chain,tmparam in zip(chain_dict[prior][px_prior][dataset]['chains'],
+                                         chain_dict[prior][px_prior][dataset]['tmparams']):
+                    if i == min_chain_len_idx[1]:
+                        trimmed_chain_dict[prior][px_prior][dataset]['chains'].append(chain)
+                    else:
+                        trim = np.shape(chain)[0]-min_chain_len_idx[0]
+                        trimmed_chain_dict[prior][px_prior][dataset]['chains'].append(chain[trim:])
+                    trimmed_chain_dict[prior][px_prior][dataset]['tmparams'].append(tmparam)
+                    i += 1
+    return trimmed_chain_dict
+
 def get_combined_arviz_obj_from_list(chain_list):
     comb_chain_dict = {}
     for i,chain in enumerate(chain_list):
@@ -199,7 +243,7 @@ def get_combined_arviz_obj_from_list(chain_list):
                 comb_chain_dict[par] = [chain[:,j]]
     return az.convert_to_inference_data(comb_chain_dict)
 
-def get_combined_arviz_obj_from_dict(chain_dict,psrs):
+def get_combined_arviz_obj_from_dict(chain_dict,psrs,return_dict=False):
     comb_chain_dict = {}
     for prior, prior_dict in chain_dict.items():
         for px_prior, px_prior_dict in prior_dict.items():
@@ -211,10 +255,17 @@ def get_combined_arviz_obj_from_dict(chain_dict,psrs):
                             if list(par)[0] != 'J':
                                 par = 'J' + par
                         if par in comb_chain_dict.keys():
-                            comb_chain_dict[par] = np.concatenate((comb_chain_dict[par],[chain[:,j]]),axis=0)
+                            try:
+                                comb_chain_dict[par] = np.concatenate((comb_chain_dict[par],[chain[:,j]]),axis=0)
+                            except:
+                                print('Exluding ',prior,px_prior,dataset,par,
+                                 'because its chain length {} doesnt match {}'.format(np.shape(chain[:,j]),np.shape(comb_chain_dict[par][0])))
                         else:
                             comb_chain_dict[par] = [chain[:,j]]
-    return az.convert_to_inference_data(comb_chain_dict)
+    if return_dict:
+        return az.convert_to_inference_data(comb_chain_dict), comb_chain_dict
+    else:
+        return az.convert_to_inference_data(comb_chain_dict)
 
 def get_rescaled_chain_dict(chains,tmparams,pardict,dataset,old_dict=None,px_priors=False):
     if not isinstance(chains,np.ndarray):
@@ -261,10 +312,11 @@ def get_rescaled_chain_dict(chains,tmparams,pardict,dataset,old_dict=None,px_pri
             
     return rescaled_chain_dict
 
-def get_combined_rescaled_chain_dict(chain_dict,pardict,dataset):
+def get_combined_rescaled_chain_dict(chain_dict,pardict,dataset,
+    priors=['uniform','bounded'],px_priors=['other','px_priors']):
     rescaled_chain_dict = {}
-    for j,px_prior in enumerate(['other','px_priors']):
-        for prior in ['uniform','bounded']:
+    for j,px_prior in enumerate(px_priors):
+        for prior in priors:
             for tmparams,chains in zip(chain_dict[prior][px_prior][dataset]['tmparams'],
                                            chain_dict[prior][px_prior][dataset]['chains']):
                 if j == 0:
@@ -340,85 +392,92 @@ def plot_common_chains(core_list,chaindir_list,priors,px_priors,dataset,plot_kwa
         legend_loc = None
     else:
         legend_loc = misc_kwargs['legend_loc']
+
     if isinstance(priors,str):
         priors = [priors]
     if isinstance(px_priors,str):
         px_priors = [px_priors]
 
+    if isinstance(dataset,str):
+        datasets = [dataset]
+    else:
+        datasets = dataset
+
     chaindir_indices = get_chaindir_indices(chaindir_list)
 
     if len(priors) == 1 and len(px_priors) == 1:
-        if np.shape(chaindir_indices[priors[0]][px_priors[0]][dataset])[0] > 1:
+        if np.shape(chaindir_indices[priors[0]][px_priors[0]][datasets[0]])[0] > 1:
             common_pars = []
-            for i in range(len(chaindir_indices[priors[0]][px_priors[0]][dataset])):
+            for i in range(len(chaindir_indices[priors[0]][px_priors[0]][datasets[0]])):
                 if i == 0:
-                    for param in core_list[chaindir_indices[priors[0]][px_priors[0]][dataset][i]].params:
+                    for param in core_list[chaindir_indices[priors[0]][px_priors[0]][datasets[0]][i]].params:
                         if param not in ['lnlike','lnprior', 'chain_accept', 'pt_chain_accept', 'chain accept', 'pt chain accept']:
                             common_pars.append(param)
                 else:
                     for param in common_pars:
-                        if param not in core_list[chaindir_indices[priors[0]][px_priors[0]][dataset][i]].params:
+                        if param not in core_list[chaindir_indices[priors[0]][px_priors[0]][datasets[0]][i]].params:
                             try:
                                 del common_pars[common_pars.index(param)]
                             except:
                                 pass
                 if legend_on:
-                    legend_labels.append(dataset+': '+priors[0]+' prior, '+px_priors[0]+' v{}'.format(i+1))
+                    legend_labels.append(datasets[0]+': '+priors[0]+' prior, '+px_priors[0]+' v{}'.format(i+1))
 
-            dg.plot_chains([core_list[x] for x in chaindir_indices[priors[0]][px_priors[0]][dataset]],
+            dg.plot_chains([core_list[x] for x in chaindir_indices[priors[0]][px_priors[0]][datasets[0]]],
                            pars=common_pars,legend_labels=legend_labels,legend_loc=legend_loc,
                            **plot_kwargs)
         else:
             if legend_on:
-                legend_labels.append(dataset+': '+priors[0]+' prior, '+px_priors[0])
-            dg.plot_chains([core_list[x] for x in chaindir_indices[priors[0]][px_priors[0]][dataset]],
+                legend_labels.append(datasets[0]+': '+priors[0]+' prior, '+px_priors[0])
+            dg.plot_chains([core_list[x] for x in chaindir_indices[priors[0]][px_priors[0]][datasets[0]]],
                            legend_labels=legend_labels,legend_loc=legend_loc,**plot_kwargs)
     else:
         common_pars = []
-        for prior in priors:
-            for px_prior in px_priors:
-                if len(common_pars)==0:
-                    comb_indices = chaindir_indices[prior][px_prior][dataset]
-                    for idx1 in comb_indices:
-                        if len(common_pars)==0:
-                            for param in core_list[idx1].params:
-                                if param not in ['lnlike','lnprior', 'chain_accept', 'pt_chain_accept', 'chain accept', 'pt chain accept']:
-                                    common_pars.append(param)
-                        else:
-                            for param in common_pars:
-                                if param not in core_list[idx1].params:
+        for dataset in datasets:
+            for prior in priors:
+                for px_prior in px_priors:
+                    if len(common_pars)==0:
+                        comb_indices = chaindir_indices[prior][px_prior][dataset]
+                        for idx1 in comb_indices:
+                            if len(common_pars)==0:
+                                for param in core_list[idx1].params:
+                                    if param not in ['lnlike','lnprior', 'chain_accept', 'pt_chain_accept', 'chain accept', 'pt chain accept']:
+                                        common_pars.append(param)
+                            else:
+                                for param in common_pars:
+                                    if param not in core_list[idx1].params:
+                                        try:
+                                            del common_pars[common_pars.index(param)]
+                                        except:
+                                            pass
+                    else:
+                        comb_indices = sorted(np.concatenate((comb_indices,
+                            chaindir_indices[prior][px_prior][dataset]),axis=0))
+                        for param in common_pars:
+                            for idx2 in chaindir_indices[prior][px_prior][dataset]:
+                                if param not in core_list[idx2].params:
                                     try:
                                         del common_pars[common_pars.index(param)]
                                     except:
                                         pass
-                else:
-                    comb_indices = sorted(np.concatenate((comb_indices,
-                        chaindir_indices[prior][px_prior][dataset]),axis=0))
-                    for param in common_pars:
-                        for idx2 in chaindir_indices[prior][px_prior][dataset]:
-                            if param not in core_list[idx2].params:
-                                try:
-                                    del common_pars[common_pars.index(param)]
-                                except:
-                                    pass
-        if legend_on:
-            for i in comb_indices:
-                for prior in priors:
-                    for px_prior in px_priors:
-                        if i in chaindir_indices[prior][px_prior][dataset]:
-                            j=1
-                            label = dataset+': '+prior+' prior, '+px_prior + ' v{}'.format(j)
-                            if label in legend_labels:
-                                versioning = True
-                                j+=1
-                                while versioning is True:
-                                    new_label = dataset+': '+prior+' prior, '+px_prior + ' v{}'.format(j)
-                                    if new_label not in legend_labels:
-                                        legend_labels.append(new_label)
-                                        versioning = False
+            if legend_on:
+                for i in comb_indices:
+                    for prior in priors:
+                        for px_prior in px_priors:
+                            if i in chaindir_indices[prior][px_prior][dataset]:
+                                j=1
+                                label = dataset+': '+prior+' prior, '+px_prior + ' v{}'.format(j)
+                                if label in legend_labels:
+                                    versioning = True
                                     j+=1
-                            else:
-                                legend_labels.append(label)
+                                    while versioning is True:
+                                        new_label = dataset+': '+prior+' prior, '+px_prior + ' v{}'.format(j)
+                                        if new_label not in legend_labels:
+                                            legend_labels.append(new_label)
+                                            versioning = False
+                                        j+=1
+                                else:
+                                    legend_labels.append(label)
         dg.plot_chains([core_list[x] for x in comb_indices],
                        pars=common_pars,legend_labels=legend_labels,legend_loc=legend_loc,
                        **plot_kwargs)
