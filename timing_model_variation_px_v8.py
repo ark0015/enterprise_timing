@@ -24,39 +24,28 @@ sys.path.insert(0, e_e_path)
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
 from enterprise_extensions import models_2 as models
+from enterprise_extensions.timing_2 import get_astrometric_priors
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
-psrlist = ["J1744-1134"]
-#psrlist = ["J0340+4130"]
 #psrlist = ["J2317+1439"]
 #psrlist = ["J1640+2224"]
-#psrlist = ["J1713+0747"]
+psrlist = ["J1713+0747"]
 #psrlist = ["J2145-0750"]
 
-datarelease = '11yr'
+datarelease = '12p5yr'
 tm_prior = "uniform"
-ephem = 'DE438'
+ephem = 'DE436'
 white_vary = True
 red_var = True
-
-run_num = 3
+run_num = 1
 resume = True
-
-coefficients = False
-tm_var=True
-nltm_plus_ltm = False
-exclude = True
 
 writeHotChains = True
 reallyHotChain = False
 datadir = top_dir + "/{}".format(datarelease)
-if nltm_plus_ltm:
-    outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_nltm_ltm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
-else:
-    outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_tm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
-    #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_nltm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
-#outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
+outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_PX_tm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
+#outdir = current_path + "/chains/messing_around/{}/".format(datarelease) + psrlist[0] + "_testing_bounded_normal_tm_3/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
 timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
@@ -101,7 +90,6 @@ for p, t in zip(parfiles, timfiles):
     psrs.append(psr)
 
 tm_params_nodmx = []
-ltm_exclude_list=[]
 for psr in psrs:
     for par in psr.fitpars:
         if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
@@ -113,9 +101,9 @@ for psr in psrs:
         elif par in ["Offset","TASC"]:
             pass
         elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
-            ltm_exclude_list.append(par)
+            pass
         elif par in ["F0"]:
-            ltm_exclude_list.append(par)
+            pass
         #elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
         #    pass
         else:
@@ -127,25 +115,25 @@ for psr in psrs:
 # tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
 #tm_param_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
 tm_param_list = tm_params_nodmx
-print("Non-linearly varying these values: ", tm_param_list, "\n in pulsar ", psrlist[0])
-if exclude:
-    ltm_exclude_list=tm_param_list
-    print("Linearly varying everything but these values: ", ltm_exclude_list, "\n in pulsar ", psrlist[0])
-else:
-    print("Linearly varying only these values: ", ltm_exclude_list, "\n in pulsar ", psrlist[0])
+print("Sampling these values: ", tm_param_list, "\n in pulsar ", psrlist[0])
+print("Using ",tm_prior," prior and astrometric priors.")
+px_priors = get_astrometric_priors(astrometric_px_file=top_dir+'/enterprise_timing/parallaxes.json')
 
-print("Using ",tm_prior," prior.")
+tm_val = float(px_priors[psrlist[0]]['PI'][0])
+tm_sigma = 2.0*max(float(px_priors[psrlist[0]]['eminus'][0]),float(px_priors[psrlist[0]]['eplus'][0]))
+tm_lower_bound = tm_val + 3.0*float(px_priors[psrlist[0]]['eminus'][0])
+tm_upper_bound = tm_val + 3.0*float(px_priors[psrlist[0]]['eplus'][0])
+
+tm_param_dict = {'PX':{'prior_mu':tm_val,'prior_sigma':tm_sigma,
+                    'prior_lower_bound':tm_lower_bound,'prior_upper_bound':tm_upper_bound}}
 
 pta = models.model_general(
     psrs,
-    tm_var=tm_var,
+    tm_var=True,
     tm_linear=False,
     tm_param_list=tm_param_list,
-    ltm_exclude_list=ltm_exclude_list,
-    exclude = exclude,
-    tm_param_dict={},
+    tm_param_dict=tm_param_dict,
     tm_prior=tm_prior,
-    nltm_plus_ltm = nltm_plus_ltm,
     common_psd="powerlaw",
     red_psd="powerlaw",
     orf=None,
@@ -181,7 +169,7 @@ pta = models.model_general(
     red_select=None,
     red_breakflat=False,
     red_breakflat_fq=None,
-    coefficients=coefficients,
+    coefficients=False,
 )
 
 # dimension of parameter space
@@ -215,7 +203,9 @@ np.savetxt(
     list(map(lambda x: str(x.__repr__()), pta.params)),
     fmt="%s",
 )
-
+# sampler = e_e.sampler.setup_sampler(
+#    pta, outdir=outdir, resume=False, empirical_distr=None
+# )
 jp = JumpProposal(pta)
 psampler.addProposalToCycle(jp.draw_from_signal("non_linear_timing_model"), 30)
 for p in pta.params:
@@ -225,6 +215,6 @@ for p in pta.params:
 
 # sampler for N steps
 N = int(1e6)
-x0 = np.hstack([p.sample() for p in pta.params])
+x0 = np.hstack(p.sample() for p in pta.params)
 psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50,
     writeHotChains=writeHotChains,hotChain=reallyHotChain)

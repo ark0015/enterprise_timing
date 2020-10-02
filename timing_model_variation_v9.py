@@ -12,8 +12,8 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-#top_path_idx = splt_path.index("nanograv")
 #top_path_idx = splt_path.index("akaiser")
+#top_path_idx = splt_path.index("nanograv")
 top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
@@ -27,20 +27,19 @@ from enterprise_extensions import models_2 as models
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
-psrlist = ["J1744-1134"]
-#psrlist = ["J0340+4130"]
+psrlist = ["J0340+4130"]
 #psrlist = ["J2317+1439"]
-#psrlist = ["J1640+2224"]
+#psrlist = ["J1640+2224"]  # J1643-1224 J1640+2224 J1909-3744
 #psrlist = ["J1713+0747"]
 #psrlist = ["J2145-0750"]
 
-datarelease = '11yr'
+datarelease = "9yr"
 tm_prior = "uniform"
-ephem = 'DE438'
+ephem = 'DE436'
 white_vary = True
 red_var = True
 
-run_num = 3
+run_num = 2
 resume = True
 
 coefficients = False
@@ -56,7 +55,7 @@ if nltm_plus_ltm:
 else:
     outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_tm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
     #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_nltm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
-#outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
+# outdir = current_path + "/chains/" + "messing_around/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
 timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
@@ -120,7 +119,6 @@ for psr in psrs:
         #    pass
         else:
             tm_params_nodmx.append(par)
-
 #tm_param_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
 # tm_param_list = [ 'PB', 'A1', 'XDOT', 'TASC', 'EPS1', 'EPS2', 'H3', 'H4']
 # tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
@@ -134,7 +132,7 @@ if exclude:
 else:
     print("Linearly varying only these values: ", ltm_exclude_list, "\n in pulsar ", psrlist[0])
 
-print("Using ",tm_prior," prior.")
+print("Using ", tm_prior, " prior.")
 
 pta = models.model_general(
     psrs,
@@ -187,7 +185,6 @@ pta = models.model_general(
 # dimension of parameter space
 params = pta.param_names
 ndim = len(params)
-
 # initial jump covariance matrix
 cov = np.diag(np.ones(ndim) * 0.1 ** 2)
 
@@ -215,7 +212,6 @@ np.savetxt(
     list(map(lambda x: str(x.__repr__()), pta.params)),
     fmt="%s",
 )
-
 jp = JumpProposal(pta)
 psampler.addProposalToCycle(jp.draw_from_signal("non_linear_timing_model"), 30)
 for p in pta.params:
@@ -224,7 +220,7 @@ for p in pta.params:
             psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
 
 # sampler for N steps
-N = int(1e6)
+N = int(4e6)
 x0 = np.hstack([p.sample() for p in pta.params])
 psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50,
     writeHotChains=writeHotChains,hotChain=reallyHotChain)

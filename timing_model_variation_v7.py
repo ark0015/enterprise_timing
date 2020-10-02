@@ -34,13 +34,13 @@ psrlist = ["J1744-1134"]
 #psrlist = ["J1713+0747"]
 #psrlist = ["J2145-0750"]
 
-datarelease = '11yr'
+datarelease = '12p5yr'
 tm_prior = "uniform"
 ephem = 'DE438'
 white_vary = True
 red_var = True
 
-run_num = 3
+run_num = 2
 resume = True
 
 coefficients = False
@@ -56,7 +56,7 @@ if nltm_plus_ltm:
 else:
     outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_tm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
     #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_nltm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
-#outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
+#outdir = current_path + "/chains/messing_around/{}/".format(datarelease) + psrlist[0] + "_testing_bounded_normal_tm_3/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
 timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
@@ -120,7 +120,6 @@ for psr in psrs:
         #    pass
         else:
             tm_params_nodmx.append(par)
-
 #tm_param_list = ['F0', 'F1', 'PX', 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']
 # tm_param_list = [ 'PB', 'A1', 'XDOT', 'TASC', 'EPS1', 'EPS2', 'H3', 'H4']
 # tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2', 'EPS1DOT', 'EPS2DOT']

@@ -3,7 +3,7 @@ from __future__ import division
 import numpy as np
 import glob, os, sys, pickle, json
 
-
+import enterprise
 from enterprise.pulsar import Pulsar
 
 
@@ -27,20 +27,19 @@ from enterprise_extensions import models_2 as models
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
-psrlist = ["J1744-1134"]
-#psrlist = ["J0340+4130"]
-#psrlist = ["J2317+1439"]
+#psrlist = ["J1744-1134"]
 #psrlist = ["J1640+2224"]
+#psrlist = ["J2317+1439"]
 #psrlist = ["J1713+0747"]
-#psrlist = ["J2145-0750"]
+psrlist = ["J2145-0750"]
 
-datarelease = '11yr'
+datarelease = '5yr'
 tm_prior = "uniform"
-ephem = 'DE438'
+ephem = 'DE436'
 white_vary = True
 red_var = True
 
-run_num = 3
+run_num = 2
 resume = True
 
 coefficients = False
@@ -51,6 +50,7 @@ exclude = True
 writeHotChains = True
 reallyHotChain = False
 datadir = top_dir + "/{}".format(datarelease)
+
 if nltm_plus_ltm:
     outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_nltm_ltm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
 else:
@@ -209,6 +209,7 @@ psampler = ptmcmc(
     outDir=outdir,
     resume=resume,
 )
+
 np.savetxt(outdir + "/pars.txt", list(map(str, pta.param_names)), fmt="%s")
 np.savetxt(
     outdir + "/priors.txt",
@@ -216,15 +217,26 @@ np.savetxt(
     fmt="%s",
 )
 
-jp = JumpProposal(pta)
-psampler.addProposalToCycle(jp.draw_from_signal("non_linear_timing_model"), 30)
-for p in pta.params:
-    for cat in ["pos", "pm", "spin", "kep", "gr"]:
-        if cat in p.name.split("_"):
-            psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
+if tm_var:
+    jp = JumpProposal(pta)
+    psampler.addProposalToCycle(jp.draw_from_signal("non_linear_timing_model"), 30)
+    for p in pta.params:
+        for cat in ["pos", "pm", "spin", "kep", "gr"]:
+            if cat in p.name.split("_"):
+                psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
+
+if coefficients:
+    x0_list = []
+    for p in pta.params:
+        try:
+            x0_list.append(p.sample())
+        except:
+            pass
+    x0 = np.asarray(x0_list)
+else:
+    x0 = np.hstack([p.sample() for p in pta.params])
 
 # sampler for N steps
 N = int(1e6)
-x0 = np.hstack([p.sample() for p in pta.params])
 psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50,
     writeHotChains=writeHotChains,hotChain=reallyHotChain)

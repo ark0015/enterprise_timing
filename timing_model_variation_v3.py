@@ -10,7 +10,6 @@ from enterprise.pulsar import Pulsar
 import corner
 from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
-
 current_path = os.getcwd()
 splt_path = current_path.split("/")
 #top_path_idx = splt_path.index("akaiser")
@@ -28,19 +27,35 @@ from enterprise_extensions import models_2 as models
 from enterprise_extensions.sampler import JumpProposal
 import noise
 
+psrlist = ["J1744-1134"]
+#psrlist = ["J0340+4130"]
 #psrlist = ["J2317+1439"]
 #psrlist = ["J1640+2224"]  # J1643-1224 J1640+2224 J1909-3744
 #psrlist = ["J1713+0747"]
-psrlist = ["J2145-0750"]
+#psrlist = ["J2145-0750"]
 
 datarelease = "9yr"
-tm_prior = "bounded-normal"
+tm_prior = "uniform"
+ephem = 'DE438'
 white_vary = True
 red_var = True
-run_num = 1
-resume = False
+
+run_num = 2
+resume = True
+
+coefficients = False
+tm_var=True
+nltm_plus_ltm = False
+exclude = True
+
+writeHotChains = True
+reallyHotChain = False
 datadir = top_dir + "/{}".format(datarelease)
-outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_RV_{}_WV_{}_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
+if nltm_plus_ltm:
+    outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_nltm_ltm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
+else:
+    outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_tm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
+    #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_nltm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
 #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
 # outdir = current_path + "/chains/" + "messing_around/"
 
@@ -72,8 +87,6 @@ else:
                     noisedict[new_key] = tmpnoisedict[og_key]
                 else:
                     noisedict[og_key] = tmpnoisedict[og_key]
-            else:
-                print('Pulsar ',psr_name, ' not in pulsar list.')
 
 # filter
 parfiles = [
@@ -85,10 +98,11 @@ timfiles = [
 
 psrs = []
 for p, t in zip(parfiles, timfiles):
-    psr = Pulsar(p, t, ephem="DE436", clk=None, drop_t2pulsar=False)
+    psr = Pulsar(p, t, ephem=ephem, clk=None, drop_t2pulsar=False)
     psrs.append(psr)
 
 tm_params_nodmx = []
+ltm_exclude_list=[]
 for psr in psrs:
     for par in psr.fitpars:
         if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
@@ -100,9 +114,9 @@ for psr in psrs:
         elif par in ["Offset","TASC"]:
             pass
         elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
-            pass
+            ltm_exclude_list.append(par)
         elif par in ["F0"]:
-            pass
+            ltm_exclude_list.append(par)
         #elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
         #    pass
         else:
@@ -114,17 +128,25 @@ for psr in psrs:
 # tm_param_list = [ 'PB', 'A1', 'EPS1', 'EPS2']
 #tm_param_list = ['F0', 'F1', 'PB', 'T0', 'A1', 'OM', 'ECC', 'M2']
 tm_param_list = tm_params_nodmx
-print("Sampling these values: ", tm_param_list, "\n in pulsar ", psrlist[0])
+print("Non-linearly varying these values: ", tm_param_list, "\n in pulsar ", psrlist[0])
+if exclude:
+    ltm_exclude_list=tm_param_list
+    print("Linearly varying everything but these values: ", ltm_exclude_list, "\n in pulsar ", psrlist[0])
+else:
+    print("Linearly varying only these values: ", ltm_exclude_list, "\n in pulsar ", psrlist[0])
 
 print("Using ",tm_prior," prior.")
 
 pta = models.model_general(
     psrs,
-    tm_var=True,
+    tm_var=tm_var,
     tm_linear=False,
     tm_param_list=tm_param_list,
+    ltm_exclude_list=ltm_exclude_list,
+    exclude = exclude,
     tm_param_dict={},
     tm_prior=tm_prior,
+    nltm_plus_ltm = nltm_plus_ltm,
     common_psd="powerlaw",
     red_psd="powerlaw",
     orf=None,
@@ -160,7 +182,7 @@ pta = models.model_general(
     red_select=None,
     red_breakflat=False,
     red_breakflat_fq=None,
-    coefficients=False,
+    coefficients=coefficients,
 )
 
 # dimension of parameter space
@@ -196,13 +218,14 @@ np.savetxt(
 )
 
 jp = JumpProposal(pta)
-psampler.addProposalToCycle(jp.draw_from_signal("timing_model"), 30)
+psampler.addProposalToCycle(jp.draw_from_signal("non_linear_timing_model"), 30)
 for p in pta.params:
     for cat in ["pos", "pm", "spin", "kep", "gr"]:
         if cat in p.name.split("_"):
             psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
 
 # sampler for N steps
-N = int(2e6)
-x0 = np.hstack(p.sample() for p in pta.params)
-psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50)
+N = int(4e6)
+x0 = np.hstack([p.sample() for p in pta.params])
+psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50,
+    writeHotChains=writeHotChains,hotChain=reallyHotChain)

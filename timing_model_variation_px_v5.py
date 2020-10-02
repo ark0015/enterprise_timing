@@ -34,13 +34,17 @@ psrlist = ["J1713+0747"]
 #psrlist = ["J2145-0750"]
 
 datarelease = '11yr'
-tm_prior = "bounded-normal"
+tm_prior = "uniform"
+ephem = 'DE438'
 white_vary = True
 red_var = True
 run_num = 1
-resume = False
+resume = True
+
+writeHotChains = True
+reallyHotChain = False
 datadir = top_dir + "/{}".format(datarelease)
-outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_RV_{}_WV_{}_PX_tm_{}/".format("_".join(tm_prior.split('-')),red_var,white_vary,run_num)
+outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_{}_{}_PX_tm_{}/".format("_".join(tm_prior.split('-')),ephem,run_num)
 #outdir = current_path + "/chains/{}/".format(datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
 
 parfiles = sorted(glob.glob(datadir + "/par/*.par"))
@@ -82,7 +86,7 @@ timfiles = [
 
 psrs = []
 for p, t in zip(parfiles, timfiles):
-    psr = Pulsar(p, t, ephem="DE436", clk=None, drop_t2pulsar=False)
+    psr = Pulsar(p, t, ephem=ephem, clk=None, drop_t2pulsar=False)
     psrs.append(psr)
 
 tm_params_nodmx = []
@@ -201,13 +205,14 @@ np.savetxt(
 )
 
 jp = JumpProposal(pta)
-psampler.addProposalToCycle(jp.draw_from_signal("timing_model"), 30)
+psampler.addProposalToCycle(jp.draw_from_signal("non_linear_timing_model"), 30)
 for p in pta.params:
     for cat in ["pos", "pm", "spin", "kep", "gr"]:
         if cat in p.name.split("_"):
             psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
 
 # sampler for N steps
-N = int(2e6)
+N = int(1e6)
 x0 = np.hstack(p.sample() for p in pta.params)
-psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50)
+psampler.sample(x0, N, SCAMweight=30, AMweight=15, DEweight=50,
+    writeHotChains=writeHotChains,hotChain=reallyHotChain)
