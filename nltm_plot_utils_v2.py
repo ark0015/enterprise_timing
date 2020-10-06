@@ -95,22 +95,9 @@ def get_pardict(psrs, datareleases):
         for par, vals, errs in zip(
             psr.fitpars[1:], psr.t2pulsar.vals(), psr.t2pulsar.errs()
         ):
-            if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
-                pass
-            elif "FD" in ["".join(list(x)[0:2]) for x in par.split("_")][0]:
-                pass
-            elif "JUMP" in ["".join(list(x)[0:4]) for x in par.split("_")][0]:
-                pass
-            elif par in ["Offset", "TASC"]:
-                pass
-            elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
-                pass
-            # elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
-            #    pass
-            else:
-                pardict[dataset][psr.name][par] = {}
-                pardict[dataset][psr.name][par]["val"] = vals
-                pardict[dataset][psr.name][par]["err"] = errs
+            pardict[dataset][psr.name][par] = {}
+            pardict[dataset][psr.name][par]["val"] = vals
+            pardict[dataset][psr.name][par]["err"] = errs
     return pardict
 
 

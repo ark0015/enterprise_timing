@@ -103,7 +103,6 @@ else:
 datadir = top_dir + "/{}".format(args.datarelease)
 
 if args.nltm_plus_ltm:
-    print('here')
     outdir = current_path + "/{}/chains/{}/".format(psrlist[0],args.datarelease) + psrlist[0] +\
      "_{}_{}_nltm_ltm_{}".format("_".join(args.tm_prior.split('-')),args.ephem,args.run_num)
 else:
@@ -113,8 +112,9 @@ else:
     # "_{}_{}_nltm_{}/".format("_".join(args.tm_prior.split('-')),args.ephem,args.run_num)
 #outdir = current_path + "/chains/{}/".format(args.datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
 
+
 if not os.path.isdir(outdir):
-    os.makedirs(outdir)
+    os.makedirs(outdir, exist_ok=True)
 else:
     if not args.resume:
         raise ValueError('{} already exists!'.format(outdir))
