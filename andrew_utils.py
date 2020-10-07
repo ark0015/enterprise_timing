@@ -2,10 +2,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os, glob, ephem, json, copy
 import numpy as np
-from collections import defaultdict,OrderedDict
-from enterprise.signals import parameter,signal_base,deterministic_signals, gp_signals
+from collections import defaultdict, OrderedDict
+from enterprise.signals import parameter, signal_base, deterministic_signals, gp_signals
 
-from enterprise_extensions import model_utils,sampler
+from enterprise_extensions import model_utils, sampler
 from enterprise_extensions.blocks import (
     white_noise_block,
     red_noise_block,
@@ -49,12 +49,13 @@ def BoundedNormal(mu=0, sigma=1, pmin=-1, pmax=1, size=None):
 
     return BoundedNormal
 
+
 def get_timing_groups(pta):
     """Utility function to get parameter groups for timing sampling.
     These groups should be appended to the usual get_parameter_groups()
     output.
     """
-    timing_pars = ['pos','spin','kep','gr','pm','DMX']
+    timing_pars = ["pos", "spin", "kep", "gr", "pm", "DMX"]
 
     groups = []
     for pars in timing_pars:
@@ -63,6 +64,7 @@ def get_timing_groups(pta):
             groups.append(group)
 
     return groups
+
 
 def get_default_physical_tm_priors():
     """
@@ -80,10 +82,10 @@ def get_default_physical_tm_priors():
     return
 
 
-def get_astrometric_priors(astrometric_px_file='../parallaxes.json'):
-    #astrometric_px_file = '../parallaxes.json'
+def get_astrometric_priors(astrometric_px_file="../parallaxes.json"):
+    # astrometric_px_file = '../parallaxes.json'
     astrometric_px = {}
-    with open(astrometric_px_file, 'r') as pxf:
+    with open(astrometric_px_file, "r") as pxf:
         astrometric_px = json.load(pxf)
         pxf.close()
 
@@ -91,11 +93,16 @@ def get_astrometric_priors(astrometric_px_file='../parallaxes.json'):
 
 
 def get_prior(
-    prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=0.0, num_params=None
+    prior_type,
+    prior_sigma,
+    prior_lower_bound,
+    prior_upper_bound,
+    mu=0.0,
+    num_params=None,
 ):
     """
     Returns the requested prior for a parameter
-    
+
     :param prior_type: prior on timing parameters.
     :param prior_sigma: Sets the sigma on timing parameters for normal distribution draws
     :param prior_lower_bound: Sets the lower bound on timing parameters for bounded normal and uniform distribution draws
@@ -147,7 +154,8 @@ def get_par_errors(t2psr, par):
                 else:
                     raise ValueError(par, " not in file!")
 
-def filter_Mmat(psr,ltm_exclude_list=[],exclude=True):
+
+def filter_Mmat(psr, ltm_exclude_list=[], exclude=True):
     """Filters the pulsar's design matrix of parameters
     :param psr: Pulsar object
     :param ltm_exclude_list: a list of parameters that will be excluded from being varied linearly
@@ -157,20 +165,25 @@ def filter_Mmat(psr,ltm_exclude_list=[],exclude=True):
     :return: A new pulsar object with the filtered design matrix
     """
     if exclude:
-        idx_lin_pars = [psr.fitpars.index(p) for p in psr.fitpars if p not in ltm_exclude_list]
+        idx_lin_pars = [
+            psr.fitpars.index(p) for p in psr.fitpars if p not in ltm_exclude_list
+        ]
     else:
-        idx_lin_pars = [psr.fitpars.index(p) for p in psr.fitpars if p in ltm_exclude_list]
+        idx_lin_pars = [
+            psr.fitpars.index(p) for p in psr.fitpars if p in ltm_exclude_list
+        ]
     print(len(psr.fitpars))
     psr.fitpars = list(np.array(psr.fitpars)[idx_lin_pars])
     print(len(psr.fitpars))
     print(psr.Mmat.shape)
-    psr._designmatrix = psr._designmatrix[:,idx_lin_pars]
+    psr._designmatrix = psr._designmatrix[:, idx_lin_pars]
     print(psr.Mmat.shape)
     return psr
 
+
 # timing model delay
 @signal_base.function
-def tm_delay(t2pulsar, tm_params_orig, tm_param_dict={},**kwargs):
+def tm_delay(t2pulsar, tm_params_orig, tm_param_dict={}, **kwargs):
     """
     Compute difference in residuals due to perturbed timing model.
 
@@ -198,7 +211,7 @@ def tm_delay(t2pulsar, tm_params_orig, tm_param_dict={},**kwargs):
         orig_params[tm_param] = tm_params_orig[tm_param][0]
 
         if tm_param in tm_param_dict.keys():
-            #User defined priors are assumed to not be scaled
+            # User defined priors are assumed to not be scaled
             tm_params_rescaled[tm_param] = tm_scaled_val
         else:
             # Section because there are incorrect handlings of errors for ecliptic coordinates, idk why
@@ -216,7 +229,8 @@ def tm_delay(t2pulsar, tm_params_orig, tm_param_dict={},**kwargs):
                 )
 
                 tm_params_rescaled["ELONG"] = (
-                    tm_scaled_val * np.double(ec_errors.lon) + tm_params_orig["ELONG"][0]
+                    tm_scaled_val * np.double(ec_errors.lon)
+                    + tm_params_orig["ELONG"][0]
                 )
                 tm_params_rescaled["ELAT"] = (
                     tm_scaled_val * np.double(ec_errors.lat) + tm_params_orig["ELAT"][0]
@@ -236,7 +250,8 @@ def tm_delay(t2pulsar, tm_params_orig, tm_param_dict={},**kwargs):
                 """
             else:
                 tm_params_rescaled[tm_param] = (
-                    tm_scaled_val * tm_params_orig[tm_param][1] + tm_params_orig[tm_param][0]
+                    tm_scaled_val * tm_params_orig[tm_param][1]
+                    + tm_params_orig[tm_param][0]
                 )
                 """
                 # Making sanity checks
@@ -275,11 +290,11 @@ def tm_delay(t2pulsar, tm_params_orig, tm_param_dict={},**kwargs):
 def timing_block(
     tm_param_list=["RAJ", "DECJ", "F0", "F1", "PMRA", "PMDEC", "PX"],
     prior_type="uniform",
-    prior_mu = 0.0,
+    prior_mu=0.0,
     prior_sigma=2.0,
     prior_lower_bound=-3.0,
     prior_upper_bound=3.0,
-    tm_param_dict = {}
+    tm_param_dict={},
 ):
     """
     Returns the timing model block of the model
@@ -294,24 +309,24 @@ def timing_block(
         e.g. {'PX':{'prior_sigma':prior_sigma,'prior_lower_bound':prior_lower_bound,'prior_upper_bound':prior_upper_bound}}
         The priors cannot be normalized by sigma if there are uneven error bounds!
     """
-    #If param in tm_param_dict not in tm_param_list, add it
+    # If param in tm_param_dict not in tm_param_list, add it
     for key in tm_param_dict.keys():
         if key not in tm_param_list:
             tm_param_list.append(key)
 
     tm_delay_kwargs = {}
-    default_prior_params = [prior_mu,prior_sigma,prior_lower_bound,prior_upper_bound]
+    default_prior_params = [prior_mu, prior_sigma, prior_lower_bound, prior_upper_bound]
     for par in tm_param_list:
         if par in tm_param_dict.keys():
-            #Overwrite default priors if new ones defined for the parameter in tm_param_dict
-            if 'prior_mu' in tm_param_dict[par].keys():
-                prior_mu = tm_param_dict[par]['prior_mu']
-            if 'prior_sigma' in tm_param_dict[par].keys():
-                prior_sigma = tm_param_dict[par]['prior_sigma']
-            if 'prior_lower_bound' in tm_param_dict[par].keys():
-                prior_lower_bound = tm_param_dict[par]['prior_lower_bound']
-            if 'prior_upper_bound' in tm_param_dict[par].keys():
-                prior_upper_bound = tm_param_dict[par]['prior_upper_bound']
+            # Overwrite default priors if new ones defined for the parameter in tm_param_dict
+            if "prior_mu" in tm_param_dict[par].keys():
+                prior_mu = tm_param_dict[par]["prior_mu"]
+            if "prior_sigma" in tm_param_dict[par].keys():
+                prior_sigma = tm_param_dict[par]["prior_sigma"]
+            if "prior_lower_bound" in tm_param_dict[par].keys():
+                prior_lower_bound = tm_param_dict[par]["prior_lower_bound"]
+            if "prior_upper_bound" in tm_param_dict[par].keys():
+                prior_upper_bound = tm_param_dict[par]["prior_upper_bound"]
         else:
             prior_mu = default_prior_params[0]
             prior_sigma = default_prior_params[1]
@@ -321,7 +336,11 @@ def timing_block(
         if par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA", "PX"]:
             key_string = "pos_param_" + par
             tm_delay_kwargs[key_string] = get_prior(
-                prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu
+                prior_type,
+                prior_sigma,
+                prior_lower_bound,
+                prior_upper_bound,
+                mu=prior_mu,
             )
 
         elif par in [
@@ -335,12 +354,20 @@ def timing_block(
         ]:
             key_string = "pm_param_" + par
             tm_delay_kwargs[key_string] = get_prior(
-                prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu
+                prior_type,
+                prior_sigma,
+                prior_lower_bound,
+                prior_upper_bound,
+                mu=prior_mu,
             )
         elif par in ["F", "F0", "F1", "F2", "P", "P1"]:
             key_string = "spin_param_" + par
             tm_delay_kwargs[key_string] = get_prior(
-                prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu
+                prior_type,
+                prior_sigma,
+                prior_lower_bound,
+                prior_upper_bound,
+                mu=prior_mu,
             )
         elif par in [
             "PB",
@@ -362,11 +389,15 @@ def timing_block(
             "EDOT",
             "KOM",
             "KIN",
-            "TASC"
+            "TASC",
         ]:
             key_string = "kep_param_" + par
             tm_delay_kwargs[key_string] = get_prior(
-                prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu
+                prior_type,
+                prior_sigma,
+                prior_lower_bound,
+                prior_upper_bound,
+                mu=prior_mu,
             )
         elif par in [
             "H3",
@@ -383,22 +414,31 @@ def timing_block(
         ]:
             key_string = "gr_param_" + par
             tm_delay_kwargs[key_string] = get_prior(
-                prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu
+                prior_type,
+                prior_sigma,
+                prior_lower_bound,
+                prior_upper_bound,
+                mu=prior_mu,
             )
         else:
             if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
                 key_string = "dmx_param_" + par
                 tm_delay_kwargs[key_string] = get_prior(
-                    prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu
+                    prior_type,
+                    prior_sigma,
+                    prior_lower_bound,
+                    prior_upper_bound,
+                    mu=prior_mu,
                 )
             else:
                 print(par, " is not currently a modelled parameter.")
 
     # timing model
-    tm_func = tm_delay(tm_param_dict=tm_param_dict,**tm_delay_kwargs)
+    tm_func = tm_delay(tm_param_dict=tm_param_dict, **tm_delay_kwargs)
     tm = deterministic_signals.Deterministic(tm_func, name="non_linear_timing_model")
 
     return tm
+
 
 def model_nltm(
     psrs,
@@ -406,10 +446,10 @@ def model_nltm(
     tm_linear=False,
     tm_param_list=[],
     ltm_exclude_list=[],
-    exclude = True,
+    exclude=True,
     tm_param_dict={},
     tm_prior="uniform",
-    nltm_plus_ltm = False,
+    nltm_plus_ltm=False,
     common_var=True,
     common_psd="powerlaw",
     red_psd="powerlaw",
@@ -521,7 +561,7 @@ def model_nltm(
                 p.tm_params_orig[key] = (p.t2pulsar[key].val, p.t2pulsar[key].err)
         if tm_linear and not nltm_plus_ltm:
             s = gp_signals.TimingModel(
-            use_svd=tm_svd, normed=tm_norm, coefficients=coefficients
+                use_svd=tm_svd, normed=tm_norm, coefficients=coefficients
             )
         elif not tm_linear and not nltm_plus_ltm:
             s = timing_block(
@@ -533,11 +573,16 @@ def model_nltm(
                 tm_param_dict=tm_param_dict,
             )
         elif not tm_linear and nltm_plus_ltm:
-            #Don't need this catch!
+            # Don't need this catch!
             if len(ltm_exclude_list) == 0:
-                ltm_exclude_list=tm_param_list
-            psrs2 = [filter_Mmat(psr,ltm_exclude_list=ltm_exclude_list,exclude=exclude) for psr in psrs]
-            s = gp_signals.TimingModel(use_svd=tm_svd, normed=tm_norm, coefficients=coefficients)
+                ltm_exclude_list = tm_param_list
+            psrs2 = [
+                filter_Mmat(psr, ltm_exclude_list=ltm_exclude_list, exclude=exclude)
+                for psr in psrs
+            ]
+            s = gp_signals.TimingModel(
+                use_svd=tm_svd, normed=tm_norm, coefficients=coefficients
+            )
             s += timing_block(
                 tm_param_list=tm_param_list,
                 prior_type=tm_prior,
@@ -627,10 +672,10 @@ def model_nltm(
         )
     fixed_bayesephem = False
     if fixed_bayesephem:
-        #TODO: Allow for fixed ephem params in enterprise.deterministic_signals
-        #s += deterministic_signals.PhysicalEphemerisSignal(
+        # TODO: Allow for fixed ephem params in enterprise.deterministic_signals
+        # s += deterministic_signals.PhysicalEphemerisSignal(
         #    use_epoch_toas=True, model=be_type
-        #)
+        # )
         frame_drift_rate = parameter.Uniform(-1e-9, 1e-9)("frame_drift_rate")
 
         d_jupiter_mass = parameter.Normal(0, 1.54976690e-11)("d_jupiter_mass")
@@ -661,7 +706,6 @@ def model_nltm(
             jup_orbit=jup_orbit,
             sat_orbit=sat_orbit,
         )
-
 
     # adding white-noise, and acting on psr objects
     models = []
@@ -751,7 +795,8 @@ def model_nltm(
 
     return pta
 
-def get_noise_from_file(noisefile,ecorr_switch=False):
+
+def get_noise_from_file(noisefile, ecorr_switch=False):
     """Gets noise parameters from file that is in a list and
     converts it to a dictionary of parameters
 
@@ -766,35 +811,35 @@ def get_noise_from_file(noisefile,ecorr_switch=False):
         The dictionary of parameters corresponding to the particular pulsar
 
     """
-    psrname = noisefile.split('/')[-1].split('_noise.txt')[0]
-    fin = open(noisefile, 'r')
+    psrname = noisefile.split("/")[-1].split("_noise.txt")[0]
+    fin = open(noisefile, "r")
     lines = fin.readlines()
     params = {}
     for line in lines:
         ln = line.split()
-        if 'efac' in line:
-            par = 'efac'
-            flag = ln[0].split('efac-')[-1]
-        elif 'equad' in line:
-            par = 'log10_equad'
-            flag = ln[0].split('equad-')[-1]
-        elif 'jitter_q' in line:
-            par = 'log10_ecorr'
-            flag = ln[0].split('jitter_q-')[-1]
+        if "efac" in line:
+            par = "efac"
+            flag = ln[0].split("efac-")[-1]
+        elif "equad" in line:
+            par = "log10_equad"
+            flag = ln[0].split("equad-")[-1]
+        elif "jitter_q" in line:
+            par = "log10_ecorr"
+            flag = ln[0].split("jitter_q-")[-1]
             if ecorr_switch:
-                flag = 'basis_ecorr_' + flag
-        elif 'RN-Amplitude' in line:
-            par = 'red_noise_log10_A'
-            flag = ''
-        elif 'RN-spectral-index' in line:
-            par = 'red_noise_gamma'
-            flag = ''
+                flag = "basis_ecorr_" + flag
+        elif "RN-Amplitude" in line:
+            par = "red_noise_log10_A"
+            flag = ""
+        elif "RN-spectral-index" in line:
+            par = "red_noise_gamma"
+            flag = ""
         else:
             break
         if flag:
             name = [psrname, flag, par]
         else:
             name = [psrname, par]
-        pname = '_'.join(name)
+        pname = "_".join(name)
         params.update({pname: float(ln[1])})
     return params

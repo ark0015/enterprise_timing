@@ -37,7 +37,9 @@ def add_bool_arg(parser, name, help, default):
 
 parser = argparse.ArgumentParser(description="")
 
-parser.add_argument("--psrlist", required=True, help="name of pulsar used for search")
+parser.add_argument(
+    "--psr_name", required=True, type=str, help="name of pulsar used for search"
+)
 
 parser.add_argument("--datarelease", required=True, help="What dataset to use")
 
@@ -109,45 +111,19 @@ add_bool_arg(
 parser.add_argument("--N", default=int(1e6), help="Number of samples (DEFAULT: 1e6)")
 
 args = parser.parse_args()
-if isinstance(args.psrlist, str):
-    psrlist = [args.psrlist]
-elif isinstance(args.psrlist, list):
-    psrlist = args.psrlist
-else:
-    raise ValueError("Pulsar name must be a string or list of strings.")
 
 if not isinstance(args.N, int):
     N = int(float(args.N))
 else:
     N = args.N
 
-
-# psrlist = ["J1744-1134"]
-# datarelease = '5yr'
-# tm_prior = "uniform"
-# ephem = 'DE438'
-# white_vary = True
-# red_var = True
-
-# run_num = 2
-# resume = True
-# sampler for N steps
-# N = int(1e6)
-
-# coefficients = False
-# tm_var=True
-# nltm_plus_ltm = False
-# exclude = True
-
-# writeHotChains = True
-# reallyHotChain = False
 datadir = top_dir + "/{}".format(args.datarelease)
 
 if args.nltm_plus_ltm:
     outdir = (
         current_path
-        + "/{}/chains/{}/".format(psrlist[0], args.datarelease)
-        + psrlist[0]
+        + "/{}/chains/{}/".format(args.psr_name, args.datarelease)
+        + args.psr_name
         + "_{}_{}_nltm_ltm_{}".format(
             "_".join(args.tm_prior.split("-")), args.ephem, args.run_num
         )
@@ -155,16 +131,12 @@ if args.nltm_plus_ltm:
 else:
     outdir = (
         current_path
-        + "/{}/chains/{}/".format(psrlist[0], args.datarelease)
-        + psrlist[0]
+        + "/{}/chains/{}/".format(args.psr_name, args.datarelease)
+        + args.psr_name
         + "_{}_{}_tm_{}".format(
             "_".join(args.tm_prior.split("-")), args.ephem, args.run_num
         )
     )
-    # outdir = current_path + "/chains/{}/".format(args.datarelease) + psrlist[0] +\
-    # "_{}_{}_nltm_{}/".format("_".join(args.tm_prior.split('-')),args.ephem,args.run_num)
-# outdir = current_path + "/chains/{}/".format(args.datarelease) + psrlist[0] + "_testing_uniform_tm_3/"
-
 
 if not os.path.isdir(outdir):
     os.makedirs(outdir, exist_ok=True)
@@ -183,7 +155,7 @@ if args.datarelease in ["12p5yr"]:
         with open(noisefile, "r") as fin:
             tmpnoisedict.update(json.load(fin))
         for key in tmpnoisedict.keys():
-            if key.split("_")[0] in psrlist:
+            if key.split("_")[0] == args.psr_name:
                 noisedict[key] = tmpnoisedict[key]
 else:
     noisefiles = sorted(glob.glob(datadir + "/noisefiles/*.txt"))
@@ -193,7 +165,7 @@ else:
         for og_key in tmpnoisedict.keys():
             split_key = og_key.split("_")
             psr_name = split_key[0]
-            if psr_name in psrlist:
+            if psr_name == args.psr_name:
                 if args.datarelease in ["5yr"]:
                     param = "_".join(split_key[1:])
                     new_key = "_".join([psr_name, "_".join(param.split("-"))])
@@ -202,49 +174,45 @@ else:
                     noisedict[og_key] = tmpnoisedict[og_key]
 
 # filter
-parfiles = [
-    x for x in parfiles if x.split("/")[-1].split(".")[0].split("_")[0] in psrlist
-]
-timfiles = [
-    x for x in timfiles if x.split("/")[-1].split(".")[0].split("_")[0] in psrlist
-]
-
-psrs = []
+is_psr = False
 for p, t in zip(parfiles, timfiles):
-    psr = Pulsar(p, t, ephem=args.ephem, clk=None, drop_t2pulsar=False)
-    psrs.append(psr)
+    if p.split("/")[-1].split(".")[0].split("_")[0] == args.psr_name:
+        psr = Pulsar(p, t, ephem=args.ephem, clk=None, drop_t2pulsar=False)
+        is_psr = True
 
-if len(psrs) == 0:
+if not is_psr:
     raise ValueError(
-        "{} does not exist in {} datarelease.".format(psrlist[0], args.datarelease)
+        "{} does not exist in {} datarelease.".format(args.psr_name, args.datarelease)
     )
 nltm_params = []
 ltm_exclude_list = []
-for psr in psrs:
-    for par in psr.fitpars:
-        if args.fullnltm:
-            nltm_params.append(par)
+for par in psr.fitpars:
+    if args.fullnltm:
+        nltm_params.append(par)
+    else:
+        if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
+            pass
+        elif "FD" in ["".join(list(x)[0:2]) for x in par.split("_")][0]:
+            pass
+        elif "JUMP" in ["".join(list(x)[0:4]) for x in par.split("_")][0]:
+            pass
+        elif par in ["Offset", "TASC"]:
+            pass
+        elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
+            ltm_exclude_list.append(par)
+        elif par in ["F0"]:
+            ltm_exclude_list.append(par)
+        # elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
+        #    pass
         else:
-            if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
-                pass
-            elif "FD" in ["".join(list(x)[0:2]) for x in par.split("_")][0]:
-                pass
-            elif "JUMP" in ["".join(list(x)[0:4]) for x in par.split("_")][0]:
-                pass
-            elif par in ["Offset", "TASC"]:
-                pass
-            elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
-                ltm_exclude_list.append(par)
-            elif par in ["F0"]:
-                ltm_exclude_list.append(par)
-            # elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
-            #    pass
-            else:
-                nltm_params.append(par)
+            nltm_params.append(par)
 
 if not args.tm_linear and args.tm_var:
     print(
-        "Non-linearly varying these values: ", nltm_params, "\n in pulsar ", psrlist[0]
+        "Non-linearly varying these values: ",
+        nltm_params,
+        "\n in pulsar ",
+        args.psr_name,
     )
 elif args.tm_linear and args.tm_var:
     print("Using linear approximation for all timing parameters.")
@@ -258,20 +226,20 @@ if args.nltm_plus_ltm:
             "Linearly varying everything but these values: ",
             ltm_exclude_list,
             "\n in pulsar ",
-            psrlist[0],
+            args.psr_name,
         )
     else:
         print(
             "Linearly varying only these values: ",
             ltm_exclude_list,
             "\n in pulsar ",
-            psrlist[0],
+            args.psr_name,
         )
 
 print("Using ", args.tm_prior, " prior.")
 
-pta = models.model_general(
-    psrs,
+pta = models.model_singlepsr_noise(
+    psr,
     tm_var=args.tm_var,
     tm_linear=args.tm_linear,
     tm_param_list=nltm_params,
@@ -280,42 +248,60 @@ pta = models.model_general(
     tm_param_dict={},
     tm_prior=args.tm_prior,
     nltm_plus_ltm=args.nltm_plus_ltm,
-    common_psd="powerlaw",
-    red_psd="powerlaw",
-    orf=None,
-    common_var=False,
-    common_components=30,
-    red_components=30,
-    dm_components=30,
-    modes=None,
-    wgts=None,
-    logfreq=False,
-    nmodes_log=10,
+    red_var=args.red_var,
+    psd="powerlaw",
+    red_select=None,
     noisedict=noisedict,
     tm_svd=False,
     tm_norm=True,
-    gamma_common=None,
+    white_vary=args.white_var,
+    components=30,
     upper_limit=False,
-    upper_limit_red=None,
-    upper_limit_dm=None,
-    upper_limit_common=None,
-    bayesephem=False,
-    be_type="orbel",
     wideband=False,
+    gamma_val=None,
     dm_var=False,
     dm_type="gp",
+    dmgp_kernel="diag",
     dm_psd="powerlaw",
+    dm_nondiag_kernel="periodic",
+    dmx_data=None,
     dm_annual=False,
-    white_vary=args.white_var,
-    gequad=False,
-    dm_chrom=False,
-    dmchrom_psd="powerlaw",
-    dmchrom_idx=4,
-    red_var=args.red_var,
-    red_select=None,
-    red_breakflat=False,
-    red_breakflat_fq=None,
+    gamma_dm_val=None,
+    chrom_gp=False,
+    chrom_gp_kernel="nondiag",
+    chrom_psd="powerlaw",
+    chrom_idx=4,
+    chrom_kernel="periodic",
+    dm_expdip=False,
+    dmexp_sign="negative",
+    dm_expdip_idx=2,
+    dm_expdip_tmin=None,
+    dm_expdip_tmax=None,
+    num_dmdips=1,
+    dmdip_seqname=None,
+    dm_cusp=False,
+    dm_cusp_sign="negative",
+    dm_cusp_idx=2,
+    dm_cusp_sym=False,
+    dm_cusp_tmin=None,
+    dm_cusp_tmax=None,
+    num_dm_cusps=1,
+    dm_cusp_seqname=None,
+    dm_dual_cusp=False,
+    dm_dual_cusp_tmin=None,
+    dm_dual_cusp_tmax=None,
+    dm_dual_cusp_sym=False,
+    dm_dual_cusp_idx1=2,
+    dm_dual_cusp_idx2=4,
+    dm_dual_cusp_sign="negative",
+    num_dm_dual_cusps=1,
+    dm_dual_cusp_seqname=None,
+    dm_sw_deter=False,
+    dm_sw_gp=False,
+    swgp_prior=None,
+    swgp_basis=None,
     coefficients=args.coefficients,
+    extra_sigs=None,
 )
 
 # dimension of parameter space
@@ -327,6 +313,7 @@ cov = np.diag(np.ones(ndim) * 0.1 ** 2)
 
 # parameter groupings
 groups = sampler.get_parameter_groups(pta)
+
 tm_groups = sampler.get_timing_groups(pta)
 for tm_group in tm_groups:
     groups.append(tm_group)
@@ -358,10 +345,13 @@ if args.tm_var and not args.tm_linear:
         for cat in ["pos", "pm", "spin", "kep", "gr"]:
             if cat in p.name.split("_"):
                 psampler.addProposalToCycle(jp.draw_from_par_prior(p.name), 30)
+"""
+sp = sampler.setup_sampler(pta,outdir=outdir,resume=args.resume)
+sp.groups.extend(sampler.get_timing_groups(pta))
+sp.sample(...)
+"""
 
-tmp = True
-# if args.coefficients:
-"""if tmp:
+"""if args.coefficients:
     x0_dict = {}
     cpar = []
     for p in pta.params:
@@ -374,7 +364,7 @@ tmp = True
     pr2 = cpar[0].get_logpdf(params=x0_dict)
     print(pr2)
     psc = utils.get_coefficients(pta, x0_dict)
-    print(psc)"""
+"""
 if args.coefficients:
     x0_list = []
     for p in pta.params:

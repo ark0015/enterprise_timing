@@ -713,14 +713,14 @@ def plot_common_chains(
     if "hist_kwargs" not in plot_kwargs.keys():
         plot_kwargs["hist_kwargs"] = dict(fill=False)
 
-    legend_labels = misc_kwargs.get("legend_labels",[])
+    legend_labels = misc_kwargs.get("legend_labels", [])
 
     if legend_labels:
         user_legend = True
     else:
         user_legend = False
 
-    legend_loc = misc_kwargs.get("legend_loc",None)
+    legend_loc = misc_kwargs.get("legend_loc", None)
 
     if isinstance(priors, str):
         priors = [priors]
@@ -879,12 +879,7 @@ def plot_common_chains(
                 for prior in chaindir_indices.keys():
                     for px_prior in chaindir_indices[prior].keys():
                         for dataset in chaindir_indices[prior][px_prior].keys():
-                            if (
-                                i
-                                in chaindir_indices[prior][px_prior][
-                                    dataset
-                                ]
-                            ):
+                            if i in chaindir_indices[prior][px_prior][dataset]:
                                 j = 1
                                 label = (
                                     dataset
