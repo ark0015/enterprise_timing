@@ -11,9 +11,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-# top_path_idx = splt_path.index("nanograv")
+top_path_idx = splt_path.index("nanograv")
 # top_path_idx = splt_path.index("akaiser")
-top_path_idx = splt_path.index("ark0015")
+# top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -66,32 +66,11 @@ add_bool_arg(
     "Whether to keep track of linear components. (DEFAULT: FALSE",
     False,
 )
-add_bool_arg(parser, "tm_var", "Whether to vary timing model. (DEFAULT: True)", True)
-add_bool_arg(
-    parser,
-    "tm_linear",
-    "Whether to use only the linear timing model. (DEFAULT: FALSE)",
-    False,
-)
 
 add_bool_arg(
     parser,
     "fit_remaining_pars",
-    "Whether to use non-linear plus linear timing model variations. (DEFAULT: FALSE)",
-    True,
-)
-add_bool_arg(
-    parser,
-    "fullnltm",
-    "Whether to include all fitparameters in the non-linear model, or just cool ones. (DEFAULT: FALSE)",
-    False,
-)
-
-add_bool_arg(
-    parser,
-    "exclude",
-    "Whether to exclude non-linear parameters from linear timing model variations,"
-    + " or only include some parameters in linear timing model. (DEFAULT: TRUE)",
+    "Whether to use non-linear plus linear timing model variations. (DEFAULT: TRUE)",
     True,
 )
 
@@ -116,10 +95,18 @@ if not isinstance(args.N, int):
     N = int(float(args.N))
 else:
     N = args.N
+
+if args.psr_name != "J0740+6620":
+    raise ValueError("Only used for J0740! Not {}".format(args.psr_name))
+
 if args.datarelease == "12p5yr":
-    datadir = top_dir + "/{}/narrowband".format(args.datarelease)
+    datadir = top_dir + "/{}".format(args.datarelease)
+    parfiles = sorted(glob.glob(datadir + "/*.par"))
+    timfiles = sorted(glob.glob(datadir + "/*.tim"))
 else:
     datadir = top_dir + "/{}".format(args.datarelease)
+    parfiles = sorted(glob.glob(datadir + "/par/*.par"))
+    timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
 
 if args.fit_remaining_pars:
     outdir = (
@@ -144,10 +131,8 @@ if not os.path.isdir(outdir):
     os.makedirs(outdir, exist_ok=True)
 else:
     if not args.resume:
-        raise ValueError("{} already exists!".format(outdir))
-
-parfiles = sorted(glob.glob(datadir + "/par/*.par"))
-timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
+        print("nothing!")
+        # raise ValueError("{} already exists!".format(outdir))
 
 noisedict = {}
 if args.datarelease in ["12p5yr"]:
@@ -187,68 +172,38 @@ if not is_psr:
         "{} does not exist in {} datarelease.".format(args.psr_name, args.datarelease)
     )
 nltm_params = []
-ltm_exclude_list = []
+ltm_list = []
 for par in psr.fitpars:
-    if args.fullnltm:
-        if par != "Offset":
-            nltm_params.append(par)
+    if par != "Offset":
+        nltm_params.append(par)
     else:
-        if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
-            pass
-        elif "FD" in ["".join(list(x)[0:2]) for x in par.split("_")][0]:
-            pass
-        elif "JUMP" in ["".join(list(x)[0:4]) for x in par.split("_")][0]:
-            pass
-        elif par in ["Offset", "TASC"]:
-            pass
-        elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
-            ltm_exclude_list.append(par)
-        elif par in ["F0"]:
-            ltm_exclude_list.append(par)
-        # elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
-        #    pass
-        else:
-            nltm_params.append(par)
+        ltm_list.append(par)
 
-if not args.tm_linear and args.tm_var:
-    print(
-        "Non-linearly varying these values: ",
-        nltm_params,
-        "\n in pulsar ",
-        args.psr_name,
-    )
-elif args.tm_linear and args.tm_var:
-    print("Using linear approximation for all timing parameters.")
-else:
-    print("Not varying timing parameters.")
+print("Non-linearly varying these values: ", nltm_params)
 
 if args.fit_remaining_pars:
-    if args.exclude:
-        ltm_exclude_list = nltm_params
-        print(
-            "Linearly varying everything but these values: ",
-            ltm_exclude_list,
-            "\n in pulsar ",
-            args.psr_name,
-        )
-    else:
-        print(
-            "Linearly varying only these values: ",
-            ltm_exclude_list,
-            "\n in pulsar ",
-            args.psr_name,
-        )
+    print("Linearly varying these values: ", ltm_list)
 
 print("Using ", args.tm_prior, " prior.")
+"""
+#pbdot = 9.40616956524680049e-13
+pbdot = 9.613818e-13
+#pbdot_sigma = 1.697e-13
+pbdot_sigma = 1.832471e-13
 
+lower = pbdot - 5 * pbdot_sigma
+upper = pbdot + 5 * pbdot_sigma
+tm_param_dict={'PBDOT':{'prior_lower_bound':lower,
+                      'prior_upper_bound':upper}}
+"""
+tm_param_dict = {}
 pta = models.model_singlepsr_noise(
     psr,
-    tm_var=args.tm_var,
-    tm_linear=args.tm_linear,
+    tm_var=True,
+    tm_linear=False,
     tm_param_list=nltm_params,
-    ltm_exclude_list=ltm_exclude_list,
-    exclude=args.exclude,
-    tm_param_dict={},
+    ltm_list=ltm_list,
+    tm_param_dict=tm_param_dict,
     tm_prior=args.tm_prior,
     fit_remaining_pars=args.fit_remaining_pars,
     red_var=args.red_var,
