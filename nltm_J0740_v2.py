@@ -185,7 +185,7 @@ if args.fit_remaining_pars:
     print("Linearly varying these values: ", ltm_list)
 
 print("Using ", args.tm_prior, " prior.")
-"""
+
 #pbdot = 9.40616956524680049e-13
 pbdot = 9.613818e-13
 #pbdot_sigma = 1.697e-13
@@ -195,8 +195,7 @@ lower = pbdot - 5 * pbdot_sigma
 upper = pbdot + 5 * pbdot_sigma
 tm_param_dict={'PBDOT':{'prior_lower_bound':lower,
                       'prior_upper_bound':upper}}
-"""
-tm_param_dict = {}
+
 pta = models.model_singlepsr_noise(
     psr,
     tm_var=True,
