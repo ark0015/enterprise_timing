@@ -59,6 +59,12 @@ parser.add_argument(
 add_bool_arg(parser, "white_var", "Vary the white noise? (DEFAULT: TRUE)", True)
 add_bool_arg(parser, "red_var", "Vary the red noise? (DEFAULT: TRUE)", True)
 add_bool_arg(parser, "resume", "Whether to resume the chains. (DEFAULT: FALSE", False)
+add_bool_arg(
+    parser,
+    "wideband",
+    "Whether to use wideband timing for DMX parameters. (DEFAULT: FALSE",
+    False,
+)
 
 add_bool_arg(
     parser,
@@ -77,21 +83,7 @@ add_bool_arg(
 add_bool_arg(
     parser,
     "fit_remaining_pars",
-    "Whether to use non-linear plus linear timing model variations. (DEFAULT: FALSE)",
-    True,
-)
-add_bool_arg(
-    parser,
-    "fullnltm",
-    "Whether to include all fitparameters in the non-linear model, or just cool ones. (DEFAULT: FALSE)",
-    False,
-)
-
-add_bool_arg(
-    parser,
-    "exclude",
-    "Whether to exclude non-linear parameters from linear timing model variations,"
-    + " or only include some parameters in linear timing model. (DEFAULT: TRUE)",
+    "Whether to use non-linear plus linear timing model variations. (DEFAULT: True)",
     True,
 )
 
@@ -110,18 +102,85 @@ add_bool_arg(
 
 parser.add_argument("--N", default=int(1e6), help="Number of samples (DEFAULT: 1e6)")
 
+add_bool_arg(
+    parser,
+    "lin_dmx_jump_fd",
+    "Whether to use linear timing for DMX, JUMP, and FD parameters. (DEFAULT: FALSE)",
+    False,
+)
+add_bool_arg(
+    parser,
+    "sample_cos",
+    "Whether to sample inclination in COSI or SINI. (DEFAULT: FALSE)",
+    False,
+)
+
 args = parser.parse_args()
 
 if not isinstance(args.N, int):
     N = int(float(args.N))
 else:
     N = args.N
-if args.datarelease == "12p5yr":
-    datadir = top_dir + "/{}/narrowband".format(args.datarelease)
+
+if args.datarelease == "all":
+    parfile = top_dir + "/12p5yr/J0740+6620/J0740+6620.prenoise.all.nchan64.par"
+    timfile = top_dir + "/12p5yr/J0740+6620/J0740+6620.prenoise.all.nchan64.tim"
+    print("Using All Data (CHIME+12.5yr+Cromartie et al. 2019)")
+elif args.datarelease == "cfr+19":
+    parfile = top_dir + "/12p5yr/J0740+6620/J0740+6620.cfr+19.par"
+    timfile = top_dir + "/12p5yr/J0740+6620/J0740+6620.cfr+19.tim"
+    print("Using Cromartie et al. 2019 data")
+elif args.datarelease == "12p5yr":
+    if args.wideband:
+        if args.psr_name == "J1713+0747":
+            parfile = (
+                top_dir
+                + "/{}/narrowband/par/{}_NANOGrav_12yv3.wb.gls.t2.par".format(
+                    args.datarelease, args.psr_name
+                )
+            )
+        else:
+            parfile = top_dir + "/{}/wideband/par/{}_NANOGrav_12yv3.wb.gls.par".format(
+                args.datarelease, args.psr_name
+            )
+        timfile = top_dir + "/{}/wideband/tim/{}_NANOGrav_12yv3.wb.tim".format(
+            args.datarelease, args.psr_name
+        )
+        print("Using {} Wideband data".format(args.datarelease))
+    else:
+        if args.psr_name == "J1713+0747":
+            parfile = (
+                top_dir
+                + "/{}/narrowband/par/{}_NANOGrav_12yv3.gls.t2.par".format(
+                    args.datarelease, args.psr_name
+                )
+            )
+        else:
+            parfile = top_dir + "/{}/narrowband/par/{}_NANOGrav_12yv3.gls.par".format(
+                args.datarelease, args.psr_name
+            )
+        timfile = top_dir + "/{}/narrowband/tim/{}_NANOGrav_12yv3.tim".format(
+            args.datarelease, args.psr_name
+        )
+        print("Using {} Narrowband data".format(args.datarelease))
+elif args.datarelease == "prelim15yr":
+    parfile = top_dir + "/{}/{}.working.par".format(args.datarelease, args.psr_name)
+    timfile = top_dir + "/{}/{}.working.tim".format(args.datarelease, args.psr_name)
+    print("Using {} data".format(args.datarelease))
 else:
     datadir = top_dir + "/{}".format(args.datarelease)
+    parfiles = sorted(glob.glob(datadir + "/par/*.par"))
+    timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
+    if args.psr_name == "J1713+0747" and args.datarelease != "5yr":
+        parfile = [
+            pfile for pfile in parfiles if args.psr_name in pfile and "t2" in pfile
+        ][0]
+    else:
+        parfile = [pfile for pfile in parfiles if args.psr_name in pfile][0]
+    timfile = [tfile for tfile in timfiles if args.psr_name in tfile][0]
+    print("Using {} data".format(args.datarelease))
 
-if args.fit_remaining_pars:
+if args.fit_remaining_pars and args.tm_var:
     outdir = (
         current_path
         + "/{}/chains/{}/".format(args.psr_name, args.datarelease)
@@ -144,14 +203,12 @@ if not os.path.isdir(outdir):
     os.makedirs(outdir, exist_ok=True)
 else:
     if not args.resume:
-        raise ValueError("{} already exists!".format(outdir))
-
-parfiles = sorted(glob.glob(datadir + "/par/*.par"))
-timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
+        print("nothing!")
+        # raise ValueError("{} already exists!".format(outdir))
 
 noisedict = {}
-if args.datarelease in ["12p5yr"]:
-    noisefiles = sorted(glob.glob(top_dir + "/{}/*.json".format(args.datarelease)))
+if args.datarelease in ["12p5yr", "cfr+19"]:
+    noisefiles = sorted(glob.glob(top_dir + "/12p5yr/*.json"))
     for noisefile in noisefiles:
         tmpnoisedict = {}
         with open(noisefile, "r") as fin:
@@ -159,7 +216,7 @@ if args.datarelease in ["12p5yr"]:
         for key in tmpnoisedict.keys():
             if key.split("_")[0] == args.psr_name:
                 noisedict[key] = tmpnoisedict[key]
-else:
+elif args.datarelease in ["5yr", "9yr", "11yr"]:
     noisefiles = sorted(glob.glob(datadir + "/noisefiles/*.txt"))
     for noisefile in noisefiles:
         tmpnoisedict = {}
@@ -167,48 +224,64 @@ else:
         for og_key in tmpnoisedict.keys():
             split_key = og_key.split("_")
             psr_name = split_key[0]
-            if psr_name == args.psr_name:
-                if args.datarelease in ["5yr"]:
+            if psr_name == args.psr_name or args.datarelease == "5yr":
+                if args.datarelease == "5yr":
                     param = "_".join(split_key[1:])
                     new_key = "_".join([psr_name, "_".join(param.split("-"))])
                     noisedict[new_key] = tmpnoisedict[og_key]
                 else:
                     noisedict[og_key] = tmpnoisedict[og_key]
+else:
+    noisedict = None
 
 # filter
 is_psr = False
-for p, t in zip(parfiles, timfiles):
-    if p.split("/")[-1].split(".")[0].split("_")[0] == args.psr_name:
-        psr = Pulsar(p, t, ephem=args.ephem, clk=None, drop_t2pulsar=False)
-        is_psr = True
+if args.psr_name in parfile:
+    psr = Pulsar(parfile, timfile, ephem=args.ephem, clk=None, drop_t2pulsar=False)
+    is_psr = True
 
 if not is_psr:
     raise ValueError(
         "{} does not exist in {} datarelease.".format(args.psr_name, args.datarelease)
     )
+
 nltm_params = []
-ltm_exclude_list = []
+ltm_list = []
+tm_param_dict = {}
 for par in psr.fitpars:
-    if args.fullnltm:
-        if par != "Offset":
-            nltm_params.append(par)
+    if par == "Offset":
+        ltm_list.append(par)
+    elif "DMX" in par and any([args.lin_dmx_jump_fd, args.wideband]):
+        ltm_list.append(par)
+    elif "JUMP" in par and args.lin_dmx_jump_fd:
+        ltm_list.append(par)
+    elif "FD" in par and args.lin_dmx_jump_fd:
+        ltm_list.append(par)
+    elif par == "SINI" and args.sample_cos:
+        nltm_params.append("COSI")
     else:
-        if "DMX" in ["".join(list(x)[0:3]) for x in par.split("_")][0]:
-            pass
-        elif "FD" in ["".join(list(x)[0:2]) for x in par.split("_")][0]:
-            pass
-        elif "JUMP" in ["".join(list(x)[0:4]) for x in par.split("_")][0]:
-            pass
-        elif par in ["Offset", "TASC"]:
-            pass
-        elif par in ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA"]:
-            ltm_exclude_list.append(par)
-        elif par in ["F0"]:
-            ltm_exclude_list.append(par)
-        # elif par in ["PMRA", "PMDEC", "PMELONG", "PMELAT", "PMBETA", "PMLAMBDA"]:
-        #    pass
-        else:
-            nltm_params.append(par)
+        nltm_params.append(par)
+
+    if par == "PBDOT":
+        pbdot = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
+        pbdot_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
+        print("USING PHYSICAL PBDOT. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
+        lower = pbdot - 5 * pbdot_sigma * 1e-12
+        upper = pbdot + 5 * pbdot_sigma * 1e-12
+        tm_param_dict["PBDOT"] = {
+            "prior_lower_bound": lower,
+            "prior_upper_bound": upper,
+        }
+    elif par == "XDOT":
+        xdot = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
+        xdot_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
+        print("USING PHYSICAL XDOT. Val: ", xdot, "Err: ", xdot_sigma * 1e-12)
+        lower = xdot - 5 * xdot_sigma * 1e-12
+        upper = xdot + 5 * xdot_sigma * 1e-12
+        tm_param_dict["XDOT"] = {
+            "prior_lower_bound": lower,
+            "prior_upper_bound": upper,
+        }
 
 if not args.tm_linear and args.tm_var:
     print(
@@ -222,22 +295,8 @@ elif args.tm_linear and args.tm_var:
 else:
     print("Not varying timing parameters.")
 
-if args.fit_remaining_pars:
-    if args.exclude:
-        ltm_exclude_list = nltm_params
-        print(
-            "Linearly varying everything but these values: ",
-            ltm_exclude_list,
-            "\n in pulsar ",
-            args.psr_name,
-        )
-    else:
-        print(
-            "Linearly varying only these values: ",
-            ltm_exclude_list,
-            "\n in pulsar ",
-            args.psr_name,
-        )
+if args.fit_remaining_pars and args.tm_var:
+    print("Linearly varying these values: ", ltm_list)
 
 print("Using ", args.tm_prior, " prior.")
 
@@ -246,9 +305,8 @@ pta = models.model_singlepsr_noise(
     tm_var=args.tm_var,
     tm_linear=args.tm_linear,
     tm_param_list=nltm_params,
-    ltm_exclude_list=ltm_exclude_list,
-    exclude=args.exclude,
-    tm_param_dict={},
+    ltm_list=ltm_list,
+    tm_param_dict=tm_param_dict,
     tm_prior=args.tm_prior,
     fit_remaining_pars=args.fit_remaining_pars,
     red_var=args.red_var,
@@ -260,7 +318,9 @@ pta = models.model_singlepsr_noise(
     white_vary=args.white_var,
     components=30,
     upper_limit=False,
-    wideband=False,
+    is_wideband=args.wideband,
+    use_dmdata=args.wideband,
+    dmjump_var=args.wideband,
     gamma_val=None,
     dm_var=False,
     dm_type="gp",
@@ -307,10 +367,17 @@ pta = models.model_singlepsr_noise(
     extra_sigs=None,
 )
 
-psampler = sampler.setup_sampler(pta, outdir=outdir, resume=args.resume, timing=True)
+if args.tm_var:
+    psampler = sampler.setup_sampler(
+        pta, outdir=outdir, resume=args.resume, timing=True
+    )
 
-with open(outdir + "/orig_timing_pars.pkl", "wb") as fout:
-    pickle.dump(psr.tm_params_orig, fout)
+    with open(outdir + "/orig_timing_pars.pkl", "wb") as fout:
+        pickle.dump(psr.tm_params_orig, fout)
+else:
+    psampler = sampler.setup_sampler(
+        pta, outdir=outdir, resume=args.resume, timing=False
+    )
 
 if args.coefficients:
     x0_list = []
