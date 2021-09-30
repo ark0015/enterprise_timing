@@ -231,6 +231,68 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
     )
 
 
+def summary_comparison(core, par_sigma={}):
+    """Makes comparison table of the form:
+    Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma 
+    TODO: allow for selection of subparameters"""
+    # pd.set_option('max_rows', None)
+    titles = nltm.get_titles(psr_name, core)
+    summary_dict = {}
+    for pnames, title in zip(core.params, titles):
+        if "timing" in pnames:
+            param_vals = core.get_param(pnames, tm_convert=True, to_burn=True)
+            # else:
+            #    param_vals = core.get_param(pnames,tm_convert=False,to_burn=True)
+
+            summary_dict[title] = {}
+            summary_dict[title]["new_val"] = np.median(param_vals)
+            summary_dict[title]["new_sigma"] = np.std(param_vals)
+            if title in core.tm_pars_orig:
+                summary_dict[title]["old_val"] = core.tm_pars_orig[title][0]
+                summary_dict[title]["old_sigma"] = core.tm_pars_orig[title][1]
+                summary_dict[title]["difference"] = (
+                    summary_dict[title]["new_val"] - core.tm_pars_orig[title][0]
+                )
+                if abs(summary_dict[title]["difference"]) > core.tm_pars_orig[title][1]:
+                    summary_dict[title]["big"] = True
+                else:
+                    summary_dict[title]["big"] = False
+                if summary_dict[title]["new_sigma"] < summary_dict[title]["old_sigma"]:
+                    summary_dict[title]["constrained"] = True
+                else:
+                    summary_dict[title]["constrained"] = False
+            else:
+                summary_dict[title]["old_val"] = "-"
+                summary_dict[title]["old_sigma"] = "-"
+                summary_dict[title]["difference"] = "-"
+                summary_dict[title]["big"] = "-"
+                summary_dict[title]["constrained"] = "-"
+    return pd.DataFrame(
+        np.asarray(
+            [
+                [x for x in summary_dict.keys()],
+                [summary_dict[x]["old_val"] for x in summary_dict.keys()],
+                [summary_dict[x]["new_val"] for x in summary_dict.keys()],
+                [summary_dict[x]["difference"] for x in summary_dict.keys()],
+                [summary_dict[x]["old_sigma"] for x in summary_dict.keys()],
+                [summary_dict[x]["new_sigma"] for x in summary_dict.keys()],
+                [summary_dict[x]["big"] for x in summary_dict.keys()],
+                [summary_dict[x]["constrained"] for x in summary_dict.keys()],
+            ]
+        ).T,
+        columns=[
+            "Parameter",
+            "Old Value",
+            "New Value",
+            "Difference",
+            "Old Sigma",
+            "New Sigma",
+            ">1 sigma change?",
+            "More Constrained?",
+        ],
+    )
+
+
 def residual_comparison(
     t2pulsar, core, use_mean_median_map="median", use_tm_pars_orig=False
 ):

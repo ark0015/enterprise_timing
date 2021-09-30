@@ -449,11 +449,7 @@ def timing_block(
                             prior_lower_bound = np.float(val + err * prior_lower_bound)
 
         tm_delay_kwargs[par] = get_prior(
-            prior_type,
-            prior_sigma,
-            prior_lower_bound,
-            prior_upper_bound,
-            mu=prior_mu,
+            prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu,
         )
     # timing model
     tm_func = tm_delay(**tm_delay_kwargs)
@@ -466,8 +462,7 @@ def timing_block(
         filter_Mmat(psr, ltm_list=ltm_list)
         if any(["DMX" in x for x in ltm_list]) and wideband_kwargs:
             ltm = gp_signals.WidebandTimingModel(
-                name="wideband_timing_model",
-                **wideband_kwargs,
+                name="wideband_timing_model", **wideband_kwargs,
             )
         else:
             ltm = gp_signals.TimingModel(coefficients=False)
