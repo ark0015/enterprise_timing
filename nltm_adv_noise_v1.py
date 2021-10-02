@@ -2,7 +2,8 @@ import numpy as np
 import glob, os, sys, pickle, json
 import string, inspect, copy
 from collections import OrderedDict
-
+import scipy
+import pandas as pd
 import enterprise
 from enterprise.pulsar import Pulsar
 from enterprise.signals import utils
@@ -16,9 +17,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-# top_path_idx = splt_path.index("nanograv")
+top_path_idx = splt_path.index("nanograv")
 # top_path_idx = splt_path.index("akaiser")
-top_path_idx = splt_path.index("ark0015")
+# top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -42,6 +43,12 @@ def add_bool_arg(parser, name, help, default):
     group.add_argument("--" + name, dest=name, action="store_true", help=help)
     group.add_argument("--no-" + name, dest=name, action="store_false", help=help)
     parser.set_defaults(**{name: default})
+
+
+def dm_funk(t, dm1, dm2):
+    """Used to refit for DM1 and DM2. t in units of MJD"""
+    # DM(t)=DM+DM1*(t-DMEPOCH)+DM2*(t-DMEPOCH)^2
+    return dm1 * (t - DMEPOCH) + dm2 * (t - DMEPOCH) ** 2
 
 
 parser = argparse.ArgumentParser(description="")
@@ -149,6 +156,9 @@ parser.add_argument(
 parser.add_argument(
     "--emp_dist_path", default="", help="Location of empirical distribution"
 )
+parser.add_argument(
+    "--dmx_file", help="Location of dmx file to fit DM1/DM2", required=True
+)
 
 args = parser.parse_args()
 
@@ -194,6 +204,16 @@ else:
 
 if len(args.parfile):
     parfile = args.parfile
+    # Load raw parfile to get DMEPOCH
+    DMEPOCH = 0
+    with open(parfile, "r") as f:
+        for line in f.readlines():
+            if "DMEPOCH" in [x for x in line.split()]:
+                DMEPOCH = np.double(line.split()[-1])
+    if DMEPOCH == 0:
+        raise ValueError(
+            "DMEPOCH not in parfile. Please add it to the parfile so DM1/DM2 fitting can work."
+        )
 if not os.path.isfile(parfile):
     raise ValueError(f"{parfile} does not exist. Please pick a real parfile.")
 
@@ -201,6 +221,25 @@ if len(args.timfile):
     timfile = args.timfile
 if not os.path.isfile(timfile):
     raise ValueError(f"{timfile} does not exist. Please pick a real timfile.")
+
+if os.path.isfile(args.dmx_file):
+    # Load DMX values
+    dtypes = {
+        "names": (
+            "DMXEP",
+            "DMX_value",
+            "DMX_var_err",
+            "DMXR1",
+            "DMXR2",
+            "DMXF1",
+            "DMXF2",
+            "DMX_bin",
+        ),
+        "formats": ("f4", "f4", "f4", "f4", "f4", "f4", "f4", "U6"),
+    }
+    dmx = np.loadtxt(args.dmx_file, skiprows=4, dtype=dtypes)
+else:
+    raise ValueError(f"{args.dmx_file} does not exist. Please pick a real dmx_file.")
 
 if args.fit_remaining_pars and args.tm_var:
     outdir = (
@@ -302,33 +341,20 @@ for par in psr.fitpars:
             "prior_lower_bound": lower,
             "prior_upper_bound": upper,
         }
-    elif par in ["DM", "DM1", "DM2"] and par not in refit_pars:
-        orig_vals = {p: v for p, v in zip(psr.t2pulsar.pars(), psr.t2pulsar.vals())}
-        orig_errs = {p: e for p, e in zip(psr.t2pulsar.pars(), psr.t2pulsar.errs())}
-        if np.any(np.isnan(psr.t2pulsar.errs())) or np.any(
-            [err == 0.0 for err in psr.t2pulsar.errs()]
-        ):
-            eidxs = np.where(
-                np.logical_or(np.isnan(psr.t2pulsar.errs()), psr.t2pulsar.errs() == 0.0)
-            )[0]
-            psr.t2pulsar.fit()
-            for idx in eidxs:
-                parr = psr.t2pulsar.pars()[idx]
-                if parr in ["DM", "DM1", "DM2"]:
-                    refit_pars.append(parr)
-                    parr_val = np.double(psr.t2pulsar.vals()[idx])
-                    parr_sigma = np.double(psr.t2pulsar.errs()[idx])
-                    print(f"USING REFIT {parr}. Val: ", parr_val, "Err: ", parr_sigma)
-                    lower = parr_val - 50 * parr_sigma
-                    upper = parr_val + 50 * parr_sigma
-                    tm_param_dict[f"{parr}"] = {
-                        "prior_mu": parr_val,
-                        "prior_sigma": parr_sigma,
-                        "prior_lower_bound": lower,
-                        "prior_upper_bound": upper,
-                    }
-        psr.t2pulsar.vals(orig_vals)
-        psr.t2pulsar.errs(orig_errs)
+    elif par in ["DM1", "DM2"] and par not in refit_pars:
+        popt, pcov = scipy.optimize.curve_fit(dm_funk, dmx["DMXEP"], dmx["DMX_value"])
+        perr = np.sqrt(np.diag(pcov))
+        for ii, parr in enumerate(["DM1", "DM2"]):
+            refit_pars.append(parr)
+            print(f"USING REFIT {parr}. Val:  {popt[ii]}, Err: {perr[ii]}")
+            lower = popt[ii] - 50 * perr[ii]
+            upper = popt[ii] + 50 * perr[ii]
+            tm_param_dict[f"{parr}"] = {
+                "prior_mu": popt[ii],
+                "prior_sigma": perr[ii],
+                "prior_lower_bound": lower,
+                "prior_upper_bound": upper,
+            }
 print(tm_param_dict)
 if not args.tm_linear and args.tm_var:
     print(
@@ -584,6 +610,10 @@ else:
 
 with open(outdir + "/orig_timing_pars.pkl", "wb") as fout:
     pickle.dump(psr.tm_params_orig, fout)
+
+if tm_param_dict:
+    with open(outdir + "/tm_param_dict.json", "w") as fout:
+        json.dump(tm_param_dict, fout, sort_keys=True, indent=4, separators=(",", ": "))
 
 with open(outdir + "/model_kwargs.json", "w") as fout:
     json.dump(model_dict, fout, sort_keys=True, indent=4, separators=(",", ": "))

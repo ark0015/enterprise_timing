@@ -33,6 +33,53 @@ def get_pardict(psrs, datareleases):
     return pardict
 
 
+def make_dmx_file(parfile):
+    # Used to make a new .dmx file
+    tmp = pd.read_csv(
+        parfile,
+        skiprows=1,
+        skipinitialspace=True,
+        sep=" ",
+        names=["param", "val", "fit", "err"],
+    )
+    tmp2 = {}
+    for row_key in tmp["param"]:
+        if "DMX_" in row_key:
+            for i, dmx in [
+                (i, x)
+                for i, x in enumerate(tmp["param"])
+                if row_key.split("_")[-1] in x
+            ]:
+                # Columns: DMXEP DMX_value DMX_var_err DMXR1 DMXR2 DMXF1 DMXF2 DMX_bin
+                lab = f"DMX_{dmx.split('_')[-1]}"
+                if lab not in tmp2.keys():
+                    tmp2[lab] = {}
+
+                if "DMX_" in dmx:
+                    tmp2[lab]["DMX_value"] = float(
+                        ("e").join(tmp.at[i, "val"].split("D"))
+                    )
+                    tmp2[lab]["DMX_var_err"] = float(
+                        ("e").join(tmp.at[i, "err"].split("D"))
+                    )
+                    tmp2[lab]["DMX_bin"] = "DX" + dmx.split("_")[-1]
+                else:
+                    tmp2[lab][dmx.split("_")[0]] = float(tmp.at[i, "val"])
+    tmpdf = pd.DataFrame.from_dict(tmp2, orient="index")
+    neworder = [
+        "DMXEP",
+        "DMX_value",
+        "DMX_var_err",
+        "DMXR1",
+        "DMXR2",
+        "DMXF1",
+        "DMXF2",
+        "DMX_bin",
+    ]
+    tmpdf = tmpdf.reindex(columns=neworder)
+    tmpdf.to_csv((".dmx").join(parfile.split(".par")), sep=" ", index=False)
+
+
 def get_map_param(core, params, to_burn=True):
     map_idx = np.argmax(core.get_param("lnpost", to_burn=True))
     """
@@ -231,18 +278,19 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
     )
 
 
-def summary_comparison(core, par_sigma={}):
+def summary_comparison(psr_name, core, par_sigma={}):
     """Makes comparison table of the form:
     Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma 
     TODO: allow for selection of subparameters"""
     # pd.set_option('max_rows', None)
-    titles = nltm.get_titles(psr_name, core)
+    titles = get_titles(psr_name, core)
     summary_dict = {}
     for pnames, title in zip(core.params, titles):
         if "timing" in pnames:
-            param_vals = core.get_param(pnames, tm_convert=True, to_burn=True)
-            # else:
-            #    param_vals = core.get_param(pnames,tm_convert=False,to_burn=True)
+            if isinstance(core, TimingCore):
+                param_vals = core.get_param(pnames, tm_convert=True, to_burn=True)
+            elif isinstance(core, Core):
+                param_vals = core.get_param(pnames, to_burn=True)
 
             summary_dict[title] = {}
             summary_dict[title]["new_val"] = np.median(param_vals)
@@ -283,10 +331,10 @@ def summary_comparison(core, par_sigma={}):
         columns=[
             "Parameter",
             "Old Value",
-            "New Value",
+            "New Median Value",
             "Difference",
             "Old Sigma",
-            "New Sigma",
+            "New Std Dev",
             ">1 sigma change?",
             "More Constrained?",
         ],
