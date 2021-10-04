@@ -34,38 +34,44 @@ def get_pardict(psrs, datareleases):
 
 
 def make_dmx_file(parfile):
-    # Used to make a new .dmx file
-    tmp = pd.read_csv(
-        parfile,
-        skiprows=1,
-        skipinitialspace=True,
-        sep=" ",
-        names=["param", "val", "fit", "err"],
-    )
-    tmp2 = {}
-    for row_key in tmp["param"]:
-        if "DMX_" in row_key:
-            for i, dmx in [
-                (i, x)
-                for i, x in enumerate(tmp["param"])
-                if row_key.split("_")[-1] in x
+    dmx_dict = {}
+    with open(parfile, "r") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        splt_line = line.split()
+        if "DMX" in splt_line[0] and splt_line[0] != "DMX":
+            for dmx_group in [
+                y.split()
+                for y in lines
+                if str(splt_line[0].split("_")[-1]) in str(y.split()[0])
             ]:
                 # Columns: DMXEP DMX_value DMX_var_err DMXR1 DMXR2 DMXF1 DMXF2 DMX_bin
-                lab = f"DMX_{dmx.split('_')[-1]}"
-                if lab not in tmp2.keys():
-                    tmp2[lab] = {}
-
-                if "DMX_" in dmx:
-                    tmp2[lab]["DMX_value"] = float(
-                        ("e").join(tmp.at[i, "val"].split("D"))
-                    )
-                    tmp2[lab]["DMX_var_err"] = float(
-                        ("e").join(tmp.at[i, "err"].split("D"))
-                    )
-                    tmp2[lab]["DMX_bin"] = "DX" + dmx.split("_")[-1]
+                lab = f"DMX_{dmx_group[0].split('_')[-1]}"
+                if lab not in dmx_dict.keys():
+                    dmx_dict[lab] = {}
+                if "DMX_" in dmx_group[0]:
+                    if isinstance(dmx_group[1], str):
+                        dmx_dict[lab]["DMX_value"] = np.double(
+                            ("e").join(dmx_group[1].split("D"))
+                        )
+                    else:
+                        dmx_dict[lab]["DMX_value"] = np.double(dmx_group[1])
+                    if isinstance(dmx_group[-1], str):
+                        dmx_dict[lab]["DMX_var_err"] = np.double(
+                            ("e").join(dmx_group[-1].split("D"))
+                        )
+                    else:
+                        dmx_dict[lab]["DMX_var_err"] = np.double(dmx_group[-1])
+                    dmx_dict[lab]["DMX_bin"] = "DX" + dmx_group[0].split("_")[-1]
                 else:
-                    tmp2[lab][dmx.split("_")[0]] = float(tmp.at[i, "val"])
-    tmpdf = pd.DataFrame.from_dict(tmp2, orient="index")
+                    dmx_dict[lab][dmx_group[0].split("_")[0]] = np.double(dmx_group[1])
+    for dmx_name, dmx_attrs in dmx_dict.items():
+        if any([key for key in dmx_attrs.keys() if "DMXEP" not in key]):
+            dmx_dict[dmx_name]["DMXEP"] = (
+                dmx_attrs["DMXR1"] + dmx_attrs["DMXR2"]
+            ) / 2.0
+    dmx_df = pd.DataFrame.from_dict(dmx_dict, orient="index")
     neworder = [
         "DMXEP",
         "DMX_value",
@@ -76,8 +82,24 @@ def make_dmx_file(parfile):
         "DMXF2",
         "DMX_bin",
     ]
-    tmpdf = tmpdf.reindex(columns=neworder)
-    tmpdf.to_csv((".dmx").join(parfile.split(".par")), sep=" ", index=False)
+    final_order = []
+    for order in neworder:
+        if order in dmx_dict["DMX_0001"]:
+            final_order.append(order)
+    dmx_df = dmx_df.reindex(columns=final_order)
+    new_dmx_file = (".dmx").join(parfile.split(".par"))
+    with open(new_dmx_file, "w") as f:
+        f.write(
+            f"# {parfile.split('/')[-1].split('.par')[0]} dispersion measure variation\n"
+        )
+        f.write(
+            f"# Mean DMX value = {np.mean([dmx_dict[x]['DMX_value'] for x in dmx_dict.keys()])} \n"
+        )
+        f.write(
+            f"# Uncertainty in average DM = {np.std([dmx_dict[x]['DMX_value'] for x in dmx_dict.keys()])} \n"
+        )
+        f.write(f"# Columns: {(' ').join(final_order)}\n")
+        dmx_df.to_csv(f, sep=" ", index=False, header=False)
 
 
 def get_map_param(core, params, to_burn=True):

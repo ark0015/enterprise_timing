@@ -237,7 +237,24 @@ if os.path.isfile(args.dmx_file):
         ),
         "formats": ("f4", "f4", "f4", "f4", "f4", "f4", "f4", "U6"),
     }
-    dmx = np.loadtxt(args.dmx_file, skiprows=4, dtype=dtypes)
+    try:
+        dmx = np.loadtxt(args.dmx_file, skiprows=4, dtype=dtypes)
+    except:
+        with open(args.dmx_file, "r") as f:
+            for i in range(4):
+                dmx_pars = f.readline()
+        dmx_pars = dmx_pars.split(": ")[-1].split("\n")[0].split(" ")
+        dtypes_2 = {}
+        tmp_names = []
+        tmp_formats = []
+        for nam, typ in zip(dtypes["names"], dtypes["formats"]):
+            if nam in dmx_pars:
+                tmp_names.append(nam)
+                tmp_formats.append(typ)
+
+        dtypes_2["names"] = tuple(tmp_names)
+        dtypes_2["formats"] = tuple(tmp_formats)
+        dmx = np.loadtxt(args.dmx_file, skiprows=4, dtype=dtypes_2)
 else:
     raise ValueError(f"{args.dmx_file} does not exist. Please pick a real dmx_file.")
 
@@ -434,7 +451,7 @@ else:
     dm_annual = False
     """
     """
-    #Second Round:
+    #Second Round (Didn't do for J0740):
     """
     """
     red_psd = 'powerlaw'
@@ -443,7 +460,7 @@ else:
     dm_annual = False
     """
     """
-    #Third Round:
+    #Third Round (Second for J0740):
     """
     red_psd = "powerlaw"
     dm_sw_gp = False
@@ -456,14 +473,47 @@ else:
     # Almost round 4a
     dm_nondiag_kernel = ["periodic", "sq_exp"]
     chrom_gps = [True, False]
+    chrom_gp_kernels = ["nondiag"]
+    chrom_kernels = ["periodic", "sq_exp"]
+    """
+    #Fourth Round (Third for J0740):
+    """
+    """
+    red_psd = "powerlaw"
+    dm_sw_gp = False
+    dm_annual = False
+    dm_sw = False
+    # Round 3a
+    # dm_nondiag_kernel = ['sq_exp','sq_exp_rfband']
+    # Round 3b
+    # dm_nondiag_kernel = ['periodic','periodic_rfband']
+    # Almost round 4a
+    dm_nondiag_kernel = ["periodic","periodic_rfband", "sq_exp","sq_exp_rfband"]
+    chrom_gps = True
     chrom_gp_kernel = "nondiag"
     chrom_kernels = ["periodic", "sq_exp"]
     """
     """
-
+    #Fifth Round (Fourth for J0740):
+    """
+    """
+    red_psd = "powerlaw"
+    dm_sw_gp = False
+    dm_annual = False
+    dm_sw = False
+    # Round 3a
+    # dm_nondiag_kernel = ['sq_exp','sq_exp_rfband']
+    # Round 3b
+    # dm_nondiag_kernel = ['periodic','periodic_rfband']
+    # Almost round 4a
+    dm_nondiag_kernel = ["periodic"]
+    chrom_gps = True
+    chrom_gp_kernel = "nondiag"
+    chrom_kernels = ["periodic", "periodic_rfband", "sq_exp", "sq_exp_rfband"]
+    """
     # Create list of pta models for our model selection
     # nmodels = len(dm_annuals) * len(dm_nondiag_kernel)
-    nmodels = 6
+    nmodels = 2
     # nmodels = len(chrom_indices) * len(dm_nondiag_kernel)
     mod_index = np.arange(nmodels)
 
