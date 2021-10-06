@@ -7,6 +7,8 @@ from copy import deepcopy
 
 import pandas as pd
 import corner
+import acor
+import pymc3
 
 import la_forge
 import la_forge.diagnostics as dg
@@ -300,14 +302,49 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
     )
 
 
-def summary_comparison(psr_name, core, par_sigma={}):
+def check_convergence(core_list):
+    cut_off_idx = -3
+    for core in core_list:
+        lp = np.unique(np.max(core.get_param("lnpost")))
+        ll = np.unique(np.max(core.get_param("lnlike")))
+        print(f"core: {core.label}")
+        print(f"\t lnpost: {lp[0]}, lnlike: {ll[0]}")
+        try:
+            grub = grubin(core.chain[:, :cut_off_idx])
+            if len(grub[1]) > 0:
+                print(
+                    "\t Params exceed rhat threshold: ",
+                    [core.params[p] for p in grub[1]],
+                )
+        except:
+            print("Can't run Grubin test")
+            pass
+        try:
+            geweke = geweke_check(core.chain[:, :cut_off_idx], burn_frac=0.25)
+            if len(geweke) > 0:
+                print("\t Params fail Geweke test: ", [core.params[p] for p in geweke])
+        except:
+            print("Can't run Geweke test")
+            pass
+        try:
+            max_acl = np.unique(np.max(get_param_acorr(core.chain[:, :cut_off_idx])))[0]
+            print(
+                f"\t Max autocorrelation length: {max_acl}, Effective sample size: {core.chain.shape[0]/max_acl}"
+            )
+        except:
+            print("Can't run Autocorrelation test")
+            pass
+        print("")
+
+
+def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
     """Makes comparison table of the form:
     Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma 
     TODO: allow for selection of subparameters"""
     # pd.set_option('max_rows', None)
-    titles = get_titles(psr_name, core)
+    plot_params = get_param_groups(core, selection=selection)
     summary_dict = {}
-    for pnames, title in zip(core.params, titles):
+    for pnames, title in zip(plot_params["par"], plot_params["title"]):
         if "timing" in pnames:
             if isinstance(core, TimingCore):
                 param_vals = core.get_param(pnames, tm_convert=True, to_burn=True)
@@ -1089,9 +1126,9 @@ def fancy_plot_all_param_overlap(
 
 
 def get_param_groups(core, selection="kep"):
-    """selection = 'all', or 'kep','gr','spin','pos','noise', 'dm' all joined by underscores"""
+    """selection = 'all', or 'kep','gr','spin','pos','noise', 'dm', 'dmx' all joined by underscores"""
     if selection == "all":
-        selection = "kep_binary_gr_spin_pos_noise_dm"
+        selection = "kep_binary_gr_spin_pos_noise_dm_dmx"
     kep_pars = [
         "PB",
         "PBDOT",
@@ -1194,7 +1231,13 @@ def get_param_groups(core, selection="kep"):
             for p in dm_pars:
                 if p in ("_").join(param.split("_")[-2:]) and p not in plot_params:
                     plot_params["par"].append(param)
-                    plot_params["title"].append((" ").join(param.split("_")[-2:]))
+                    plot_params["title"].append(
+                        param
+                    )  # (" ").join(param.split("_")[-2:]))
+        if "dmx" in selection_list:
+            if "DMX_" in param:
+                plot_params["par"].append(param)
+                plot_params["title"].append(("_").join(param.split("_")[-2:]))
         if "excludes" in selection_list:
             for p in excludes:
                 if p in param and p not in plot_params:
@@ -1515,3 +1558,241 @@ def mass_plot(
         x=suptitleloc[0],
         y=suptitleloc[1],
     )
+
+
+########################################
+# Taken from mcmc_diagnostics
+def geweke_check(chain, burn_frac=None, threshold=0.25):
+    """
+    Function to check for stationarity of MCMC chain using the Geweke diagnostic from arviz.geweke
+    
+    Parameters
+    ============
+    chain -- N-dimensional MCMC posterior chain. Assumes rows = samples, columns = parameters.
+    burn_frac -- Burn-in fraction; Default: None
+    threshold -- Threshold to determine failure of stationarity for given chain; Default: 0.25
+    
+    Returns
+    ============
+    nc_idx -- index of parameters in the chain whose samples fail the Geweke test
+    """
+    if burn_frac is not None:
+        burn_len = int(chain.shape[0] * burn_frac)
+        test_chain = chain[burn_len:, :].copy()
+    else:
+        test_chain = chain[:, :].copy()
+
+    nsamp, nparam = test_chain.shape
+
+    nc_flag = np.full((nparam), False)
+
+    # print(nparam)
+
+    for ii in range(nparam):
+
+        # print(ii)
+
+        gs = np.array([[5, 5]])
+
+        trial_starts = np.array([0.1, 0.2, 0.3, 0.4])
+
+        jj = 0
+
+        while sum(np.abs(gs[:, 1]) > threshold) > 0:
+
+            if jj == len(trial_starts):
+                nc_flag[ii] = True
+                break
+
+            first = trial_starts[jj]
+            last = 0.5
+
+            gs = pymc3.geweke(test_chain[:, ii], first=first, last=last, intervals=10)
+
+            jj += 1
+
+    nc_idx = np.arange(0, test_chain.shape[1])[nc_flag]
+
+    return nc_idx
+
+
+def geweke_plot(arr, threshold=0.25, first=0.1, last=0.5, intervals=10):
+    """
+    Function to plot the z-score from arviz.geweke with threshold
+    
+    Parameters
+    ===========
+    arr -- Input (1-D) array
+    threshold -- Threshold for geweke test; Default: 0.25
+    first -- First fraction of arr; Default: 0.1
+    last -- Last fraction of arr; Default: 0.5
+    intervals -- Number of intervals of `first` fraction of arr to compute z-score
+    
+    Returns
+    ===========
+    Plots the Geweke diagnostic plot. For stationary chains, the z-score should oscillate between
+    the `threshold` values, but not exceed it.
+    """
+    gs = pymc3.geweke(arr, first=first, last=last, intervals=10)
+
+    pl.plot(gs[:, 0], gs[:, 1], marker="o", ls="-")
+
+    pl.axhline(threshold)
+    pl.axhline(-1 * threshold)
+
+    pl.ylabel("Z-score")
+    pl.xlabel("No. of samples")
+
+    pl.show()
+
+    return None
+
+
+def plot_dist_evolution(arr, nbins=20, fracs=np.array([0.1, 0.2, 0.3, 0.4]), last=0.5):
+    """
+    Function to plot histograms of different fractions used in Geweke test
+    
+    Parameters
+    ===========
+    arr -- Input (1-D) array
+    nbins -- Number of bins in histograms; Default: 20
+    fracs -- Starting fractions of arr to plot; Default: [0.1, 0.2, 0.3, 0.4]
+    last -- Final fraction of arr to plot; Default: 0.5
+    
+    Returns
+    ===========
+    Plots of histograms of given fractions overlayed together.
+    """
+    fracs = fracs
+
+    last = last
+    last_subset = arr[int(last * arr.shape[0]) :]
+
+    for ff in fracs:
+
+        subset = arr[: int(ff * arr.shape[0])]
+
+        pl.hist(
+            subset, nbins, histtype="step", density=True, label="f=0.0--{}".format(ff)
+        )
+
+    pl.hist(
+        last_subset,
+        nbins,
+        histtype="step",
+        density=True,
+        label="f={}--1.0".format(last),
+    )
+
+    pl.legend(loc="best", ncol=3)
+
+    pl.show()
+
+    return None
+
+
+def get_param_acorr(arr, burn=None):
+    """
+    Function to get the autocorrelation length for each parameter in a ndim array
+
+    Parameters
+    ==========
+    arr -- array, optional
+        Array that contains samples from an MCMC array that is samples x param
+        in shape.
+    burn -- int, optional
+        Number of samples burned from beginning of array. Used when calculating
+        statistics and plotting histograms. If None, burn is `len(samples)/4`
+
+    Returns
+    =======
+    Array of autocorrelation lengths for each parameter
+    """
+    if burn is None:
+        burn = int(0.25 * arr.shape[0])
+
+    # Do not want autocorr of acceptance rate or pt acceptance rate
+    len_rel_params = arr.shape[1] - 2
+    tau_arr = np.zeros(len_rel_params)
+    for param_idx in range(len_rel_params):
+        indv_param = arr[burn:, param_idx]
+        tau_arr[param_idx], _, _ = acor.acor(indv_param)
+    return tau_arr
+
+
+def trim_array_acorr(arr, burn=None):
+    """
+    Function to trim an array by the longest autocorrelation length of all parameters in a ndim array
+
+    Parameters
+    ==========
+    arr -- array, optional
+        Array that contains samples from an MCMC chain that is samples x param
+        in shape.
+    burn -- int, optional
+        Number of samples burned from beginning of chain. Used when calculating
+        statistics and plotting histograms. If None, burn is `len(samples)/4`.
+
+    Returns
+    =======
+    Thinned array
+    """
+    if burn is None:
+        burn = int(0.25 * arr.shape[0])
+    acorr_lens = get_param_acorr(arr, burn=burn)
+    max_acorr = int(np.unique(np.max(acorr_lens)))
+    return arr[burn::max_acorr]
+
+
+def grubin(data, M=4, burn=0.25, threshold=1.1):
+    """
+    Gelman-Rubin split R hat statistic to verify convergence.
+
+    See section 3.1 of https://arxiv.org/pdf/1903.08008.pdf.
+    Values > 1.1 => recommend continuing sampling due to poor convergence.
+
+    Input:
+        data (ndarray): consists of entire chain file
+        pars (list): list of parameters for each column
+        M (integer): number of times to split the chain
+        burn (float): percent of chain to cut for burn-in
+        threshold (float): Rhat value to tell when chains are good
+
+    Output:
+        Rhat (ndarray): array of values for each index
+        idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
+    """
+    burn = int(burn * data.shape[0])  # cut off burn-in
+    # data_split = np.split(data[burn:,:-2], M)  # cut off last two columns
+    try:
+        data_split = np.split(data[burn:, :-2], M)  # cut off last two columns
+    except:
+        # this section is to make everything divide evenly into M arrays
+        P = int(np.floor((len(data[:, 0]) - burn) / M))  # nearest integer to division
+        X = len(data[:, 0]) - burn - M * P  # number of additional burn in points
+        burn += X  # burn in to the nearest divisor
+        burn = int(burn)
+
+        data_split = np.split(data[burn:, :-2], M)  # cut off last two columns
+
+    N = len(data[burn:, 0])
+    data = np.array(data_split)
+
+    # print(data_split.shape)
+
+    theta_bar_dotm = np.mean(data, axis=1)  # mean of each subchain
+    theta_bar_dotdot = np.mean(theta_bar_dotm, axis=0)  # mean of between chains
+    B = (
+        N / (M - 1) * np.sum((theta_bar_dotm - theta_bar_dotdot) ** 2, axis=0)
+    )  # between chains
+
+    # do some clever broadcasting:
+    sm_sq = 1 / (N - 1) * np.sum((data - theta_bar_dotm[:, None, :]) ** 2, axis=1)
+    W = 1 / M * np.sum(sm_sq, axis=0)  # within chains
+
+    var_post = (N - 1) / N * W + 1 / N * B
+    Rhat = np.sqrt(var_post / W)
+
+    idx = np.where(Rhat > threshold)[0]  # where Rhat > threshold
+
+    return Rhat, idx

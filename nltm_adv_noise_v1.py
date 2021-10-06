@@ -17,9 +17,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-top_path_idx = splt_path.index("nanograv")
+# top_path_idx = splt_path.index("nanograv")
 # top_path_idx = splt_path.index("akaiser")
-# top_path_idx = splt_path.index("ark0015")
+top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -473,7 +473,7 @@ else:
     # Almost round 4a
     dm_nondiag_kernel = ["periodic", "sq_exp"]
     chrom_gps = [True, False]
-    chrom_gp_kernels = ["nondiag"]
+    chrom_gp_kernel = "nondiag"
     chrom_kernels = ["periodic", "sq_exp"]
     """
     #Fourth Round (Third for J0740):
