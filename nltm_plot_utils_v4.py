@@ -8,7 +8,8 @@ from copy import deepcopy
 import pandas as pd
 import corner
 import acor
-import pymc3
+
+# import pymc3
 
 import la_forge
 import la_forge.diagnostics as dg
@@ -213,7 +214,7 @@ def tm_delay(t2pulsar, tm_params_orig, new_params):
     plotres(t2pulsar, new_res, residuals, tm_params_rescaled)
 
     # Return the time-series for the pulsar
-    return -(new_res[isort] - residuals[isort])
+    # return -(new_res[isort] - residuals[isort])
 
 
 def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs):
@@ -246,7 +247,7 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
             old_res[i] / 1e-6,
             yerr=errs[i],
             fmt="x",
-            label=f"Old Residual, {pars[0]}={vals[0]:.2e}",
+            label="Old Residuals",
             **kwargs,
         )
         plt.errorbar(
@@ -254,7 +255,7 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
             new_res[i] / 1e-6,
             # yerr=errs[i],
             fmt="+",
-            label=f"New Residual, {pars[0]}={par_dict[pars[0]]:.2e}",
+            label="New Residuals",
             **kwargs,
         )
         # plt.legend()
@@ -281,7 +282,7 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
                 flagoldres[i] / 1e-6,
                 yerr=flagerrs[i],
                 fmt="d",
-                label=f"Old Residual, {pars[0]}={vals[0]:.2e}",
+                label="Old Residuals",
                 **kwargs,
             )
             plt.errorbar(
@@ -289,16 +290,16 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
                 flagnewres[i] / 1e-6,
                 yerr=flagerrs[i],
                 fmt="x",
-                label=f"New Residual, {pars[0]}={par_dict[pars[0]]:.2e}",
+                label="New Residuals",
                 **kwargs,
             )
 
         # plt.legend(unique,numpoints=1,bbox_to_anchor=(1.1,1.1))
-
-    plt.xlabel("MJD")
-    plt.ylabel("res [us]")
+    plt.legend()
+    plt.xlabel(r"MJD")
+    plt.ylabel(r"res [$\mu s$]")
     plt.title(
-        f"{psr.name} - rms old res = {meanoldres:.3f} us new res {meannewres:.3f} us"
+        fr"{psr.name}: RMS, Old Res = {meanoldres:.3f} $\mu s$, New Res = {meannewres:.3f} $\mu s$"
     )
 
 
@@ -307,6 +308,7 @@ def check_convergence(core_list):
     for core in core_list:
         lp = np.unique(np.max(core.get_param("lnpost")))
         ll = np.unique(np.max(core.get_param("lnlike")))
+        print("-------------------------------")
         print(f"core: {core.label}")
         print(f"\t lnpost: {lp[0]}, lnlike: {ll[0]}")
         try:
@@ -317,14 +319,14 @@ def check_convergence(core_list):
                     [core.params[p] for p in grub[1]],
                 )
         except:
-            print("Can't run Grubin test")
+            print("\t Can't run Grubin test")
             pass
         try:
             geweke = geweke_check(core.chain[:, :cut_off_idx], burn_frac=0.25)
             if len(geweke) > 0:
                 print("\t Params fail Geweke test: ", [core.params[p] for p in geweke])
         except:
-            print("Can't run Geweke test")
+            print("\t Can't run Geweke test")
             pass
         try:
             max_acl = np.unique(np.max(get_param_acorr(core.chain[:, :cut_off_idx])))[0]
@@ -332,7 +334,7 @@ def check_convergence(core_list):
                 f"\t Max autocorrelation length: {max_acl}, Effective sample size: {core.chain.shape[0]/max_acl}"
             )
         except:
-            print("Can't run Autocorrelation test")
+            print("\t Can't run Autocorrelation test")
             pass
         print("")
 
@@ -341,7 +343,7 @@ def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
     """Makes comparison table of the form:
     Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma 
     TODO: allow for selection of subparameters"""
-    # pd.set_option('max_rows', None)
+    pd.set_option("max_rows", None)
     plot_params = get_param_groups(core, selection=selection)
     summary_dict = {}
     for pnames, title in zip(plot_params["par"], plot_params["title"]):
@@ -415,7 +417,7 @@ def residual_comparison(
         )
 
     for par in core.params:
-        unscaled_param = core.get_param(par, to_burn=True)
+        unscaled_param = core.get_param(par, to_burn=True, tm_convert=True)
         if use_mean_median_map == "map":
             core_timing_dict_unscaled[par] = unscaled_param[map_idx_e_e]
         elif use_mean_median_map == "mean":
@@ -447,6 +449,8 @@ def residual_comparison(
             chain_tm_delay_kwargs[par] = core_timing_dict[
                 core.params[core_titles.index(par)]
             ]
+        else:
+            print(f"{par} not in t2pulsar pars")
 
     tm_delay(t2pulsar, chain_tm_params_orig, chain_tm_delay_kwargs)
     plt.show()
@@ -1143,7 +1147,7 @@ def get_param_groups(core, selection="kep"):
         "EPS2DOT",
         "FB",
         "SINI",
-        "MTOT",
+        "COSI" "MTOT",
         "M2",
         "XDOT",
         "X2DOT",
@@ -1193,56 +1197,50 @@ def get_param_groups(core, selection="kep"):
     for param in core.params:
         split_param = param.split("_")[-1]
         if "kep" in selection_list:
-            for p in kep_pars:
-                if p == split_param and p not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(param.split("_")[-1])
+            if split_param in kep_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)
         if "mass" in selection_list:
-            for p in mass_pars:
-                if p == split_param and "kep" not in selection_list:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(param.split("_")[-1])
+            if split_param in mass_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)
         if "pos" in selection_list:
-            for p in pos_pars:
-                if p == split_param and p not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(param.split("_")[-1])
+            if split_param in pos_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)
         if "noise" in selection_list:
-            for p in noise_pars:
-                if p == split_param and p not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append((" ").join(param.split("_")[1:]))
+            if split_param in noise_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append((" ").join(param.split("_")[1:]))
         if "spin" in selection_list:
-            for p in spin_pars:
-                if p == split_param and p not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(param.split("_")[-1])
+            if split_param in spin_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)
         if "gr" in selection_list:
-            for p in gr_pars:
-                if p == split_param and p not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(param.split("_")[-1])
+            if split_param in gr_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)
         if "pm" in selection_list:
-            for p in pm_pars:
-                if p == split_param and p not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(param.split("_")[-1])
+            if split_param in pm_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)
         if "dm" in selection_list:
             for p in dm_pars:
-                if p in ("_").join(param.split("_")[-2:]) and p not in plot_params:
+                if ("_").join(param.split("_")[-2:]) in dm_pars and ("_").join(
+                    param.split("_")[-2:]
+                ) not in plot_params:
                     plot_params["par"].append(param)
                     plot_params["title"].append(
                         param
                     )  # (" ").join(param.split("_")[-2:]))
         if "dmx" in selection_list:
-            if "DMX_" in param:
+            if "DMX_" in param and split_param not in plot_params:
                 plot_params["par"].append(param)
                 plot_params["title"].append(("_").join(param.split("_")[-2:]))
         if "excludes" in selection_list:
-            for p in excludes:
-                if p in param and p not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(param)
+            if split_param in excludes and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(param)
     return plot_params
 
 
@@ -1339,7 +1337,7 @@ def corner_plots(
     plt.show()
 
 
-def mass_pulsar(PB, A1, SINI, M2):
+def mass_pulsar(PB, A1, SINI, M2, errors={}):
     """
     Computes the companion mass from the Keplerian mass function. This
     function uses a Newton-Raphson method since the equation is
@@ -1355,7 +1353,24 @@ def mass_pulsar(PB, A1, SINI, M2):
     T_sun = 4.925490947e-6  # conversion from solar masses to seconds
     nb = 2 * np.pi / PB / 86400
     mf = nb ** 2 * A1 ** 3 / T_sun
-    return np.sqrt((M2 * SINI) ** 3 / mf) - M2
+
+    if errors:
+        mp_err_sqrd = (
+            ((3 / 2) * np.sqrt(M2 * SINI ** 3 / mf) - 1) ** 2 * errors["M2"] ** 2
+            + (((3 / 2) * np.sqrt(M2 ** 3 * SINI / mf)) ** 2 * errors["SINI"] ** 2)
+            + (
+                (np.sqrt(M2 ** 3 * SINI ** 3 / (2 * np.pi) ** 2)) ** 2
+                * (errors["PB"] / 8600) ** 2
+            )
+            + (
+                ((3 / 2) * np.sqrt(M2 ** 2 * SINI / nb ** 2 / T_sun / A1)) ** 2
+                * errors["A1"] ** 2
+            )
+        )
+
+        return np.sqrt((M2 * SINI) ** 3 / mf) - M2, np.sqrt(mp_err_sqrd)
+    else:
+        return np.sqrt((M2 * SINI) ** 3 / mf) - M2
 
 
 def mass_plot(
@@ -1495,9 +1510,9 @@ def mass_plot(
             ax.get_yaxis().set_visible(False)
             ax.tick_params(axis="x", labelsize=16)
 
+    fig = plt.gcf()
+    allaxes = fig.get_axes()
     if conf_int or par_sigma:
-        fig = plt.gcf()
-        allaxes = fig.get_axes()
         for ax, splt_key in zip(allaxes[1:], ["M2", "COSI"]):
             if par_sigma:
                 if splt_key in par_sigma:
@@ -1535,8 +1550,6 @@ def mass_plot(
                             ax.fill_between(
                                 [low, up], ax.get_ylim()[1], color=f"C{i}", alpha=0.1,
                             )
-    else:
-        fig = plt.gcf()
 
     # fig = plt.gcf()
     patches = []
@@ -1550,7 +1563,7 @@ def mass_plot(
         txt_loc = (0.05, 0.1)
         txt_kwargs = {"fontsize": 165, "alpha": 0.25, "rotation": 30}
         fig.text(txt_loc[0], txt_loc[1], txt, **txt_kwargs)
-    fig.legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
+    allaxes[0].legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     plt.suptitle(
         f"{psr_name} Mass Plots",
