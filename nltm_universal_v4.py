@@ -338,7 +338,7 @@ for par in psr.fitpars:
     if par in ["PBDOT", "XDOT"]:
         par_val = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
         par_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
-        if np.log10(par_sigma) < -10.0:
+        if np.log10(par_sigma) > -10.0:
             print("USING PHYSICAL PBDOT. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
             lower = par_val - 50 * par_sigma * 1e-12
             upper = par_val + 50 * par_sigma * 1e-12

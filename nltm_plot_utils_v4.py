@@ -1416,6 +1416,7 @@ def mass_plot(
     preliminary=False,
     conf_int=None,
     close=True,
+    print_conf_int=False,
     par_sigma={},
     hist_kwargs={},
     fig_kwargs={},
@@ -1541,8 +1542,10 @@ def mass_plot(
                     - coco.get_param(f"{psr_name}_timing_model_SINI", to_burn=True) ** 2
                 )
         co_bins = [co_Mp, co_Mc, co_COSI]
-        print(coco.label)
-        print("----------------")
+
+        if print_conf_int:
+            print(coco.label)
+            print("----------------")
         for j, ax in enumerate(axes):
             ax.hist(co_bins[j], label=core_list_legend[i], **hist_kwargs)
             ax.set_xlabel(co_labels[j], fontsize=24)
@@ -1560,26 +1563,27 @@ def mass_plot(
                 ax.fill_between(
                     [lower, upper], ax.get_ylim()[1], color=f"C{i}", alpha=0.1
                 )
-
-                print(co_labels[j])
-                if j == 2:
-                    print(f"Median: {np.arccos(np.median(co_bins[j]))*180/np.pi}")
-                    print(f"Upper: {np.arccos(lower)*180/np.pi}")
-                    print(f"Lower: {np.arccos(upper)*180/np.pi}")
-                    print(
-                        f"Diff Upper: {(np.arccos(lower)-np.arccos(np.median(co_bins[j])))*180/np.pi}"
-                    )
-                    print(
-                        f"Diff Lower: {(np.arccos(np.median(co_bins[j]))-np.arccos(upper))*180/np.pi}"
-                    )
-                    print("")
-                else:
-                    print(f"Median: {np.median(co_bins[j])}")
-                    print(f"Lower: {lower}")
-                    print(f"Upper: {upper}")
-                    print(f"Diff Lower: {np.median(co_bins[j])-lower}")
-                    print(f"Diff Upper: {upper-np.median(co_bins[j])}")
-                    print("")
+                
+                if print_conf_int:
+                    print(co_labels[j])
+                    if j == 2:
+                        print(f"Median: {np.arccos(np.median(co_bins[j]))*180/np.pi}")
+                        print(f"Upper: {np.arccos(lower)*180/np.pi}")
+                        print(f"Lower: {np.arccos(upper)*180/np.pi}")
+                        print(
+                            f"Diff Upper: {(np.arccos(lower)-np.arccos(np.median(co_bins[j])))*180/np.pi}"
+                        )
+                        print(
+                            f"Diff Lower: {(np.arccos(np.median(co_bins[j]))-np.arccos(upper))*180/np.pi}"
+                        )
+                        print("")
+                    else:
+                        print(f"Median: {np.median(co_bins[j])}")
+                        print(f"Lower: {lower}")
+                        print(f"Upper: {upper}")
+                        print(f"Diff Lower: {np.median(co_bins[j])-lower}")
+                        print(f"Diff Upper: {upper-np.median(co_bins[j])}")
+                        print("")
 
     fig = plt.gcf()
     allaxes = fig.get_axes()
