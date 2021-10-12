@@ -612,6 +612,10 @@ def plot_all_param_overlap(
         "linewidth": 3.0,
     }
 
+    if "suptitle" not in fig_kwargs.keys():
+        suptitle = f"{psr_name} Mass Plots"
+    else:
+        suptitle = fig_kwargs["suptitle"]
     if "suptitlefontsize" not in fig_kwargs.keys():
         suptitlefontsize = 24
     else:
@@ -661,7 +665,7 @@ def plot_all_param_overlap(
     if close:
         dg.plot_chains(
             core_list,
-            suptitle=psr_name,
+            suptitle=suptitle,
             pars=common_params_all,
             titles=common_titles_all,
             real_tm_pars=real_tm_pars,
@@ -729,10 +733,7 @@ def plot_all_param_overlap(
         fig.legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
         fig.subplots_adjust(wspace=wspace, hspace=hspace)
         plt.suptitle(
-            f"{psr_name} Common Parameters",
-            fontsize=suptitlefontsize,
-            x=suptitleloc[0],
-            y=suptitleloc[1],
+            suptitle, fontsize=suptitlefontsize, x=suptitleloc[0], y=suptitleloc[1],
         )
         plt.show()
         plt.close()
@@ -973,6 +974,7 @@ def fancy_plot_all_param_overlap(
     preliminary=True,
     ncols=4,
     real_tm_pars=True,
+    selection="all",
     hist_kwargs={},
     fig_kwargs={},
 ):
@@ -988,7 +990,10 @@ def fancy_plot_all_param_overlap(
             "histtype": "step",
             "bins": 40,
         }
-
+    if "suptitle" not in fig_kwargs.keys():
+        suptitle = f"{psr_name} Mass Plots"
+    else:
+        suptitle = fig_kwargs["suptitle"]
     if "labelfontsize" not in fig_kwargs.keys():
         labelfontsize = 18
     else:
@@ -1031,87 +1036,102 @@ def fancy_plot_all_param_overlap(
     )
 
     fancy_labels = get_fancy_labels(common_titles_all)
+    selected_params = get_param_groups(core_list[0], selection=selection)
+
+    selected_common_params = []
+    selected_common_titles = []
+    selected_fancy_labels = []
+    for cpa, cta, fl in zip(common_params_all, common_titles_all, fancy_labels):
+        if cpa in selected_params["par"]:
+            selected_common_params.append(cpa)
+            selected_common_titles.append(cta)
+            selected_fancy_labels.append(fl)
 
     if preliminary:
         txt = "PRELIMINARY"
         txt_loc = (0.15, 0.15)
         txt_kwargs = {"fontsize": 180, "alpha": 0.25, "rotation": 55}
 
-    L = len(common_params_all)
+    L = len(selected_common_params)
     nrows = int(L // ncols)
     if L % ncols > 0:
         nrows += 1
     fig = plt.figure(figsize=[15, 4 * nrows])
-    for (ii, par), label in zip(enumerate(common_params_all), fancy_labels):
-        cell = ii + 1
-        axis = fig.add_subplot(nrows, ncols, cell)
-        for co in core_list:
-            if isinstance(co, TimingCore):
-                plt.hist(co.get_param(par, tm_convert=real_tm_pars), **hist_kwargs)
-            elif isinstance(co, Core):
-                plt.hist(co.get_param(par), **hist_kwargs)
-        if "efac" in common_titles_all[ii]:
-            axis.set_title(
-                common_titles_all[ii].split("efac")[0], fontsize=titlefontsize
-            )
-            axis.set_xlabel(label, fontsize=labelfontsize - 2)
-        elif "equad" in common_titles_all[ii]:
-            axis.set_title(
-                common_titles_all[ii].split("log10")[0], fontsize=titlefontsize
-            )
-            axis.set_xlabel(label, fontsize=labelfontsize - 2)
-        elif "ecorr" in common_titles_all[ii]:
-            axis.set_title(
-                common_titles_all[ii].split("log10")[0], fontsize=titlefontsize
-            )
-            axis.set_xlabel(label, fontsize=labelfontsize - 2)
-        else:
-            axis.set_xlabel(label, fontsize=labelfontsize)
-
-        if "DMX" in par:
-            splt_key = ("_").join(par.split("_")[-2:])
-        else:
-            splt_key = par.split("_")[-1]
-        if par_sigma:
-            if splt_key in par_sigma:
-                val = par_sigma[splt_key][0]
-                err = par_sigma[splt_key][1]
-                fill_space_x = np.linspace(val - err, val + err, 20)
-                axis.fill_between(
-                    fill_space_x, axis.get_ylim()[1], color="grey", alpha=0.2
+    for (ii, par), label in zip(
+        enumerate(selected_common_params), selected_fancy_labels
+    ):
+        if par in selected_params["par"]:
+            cell = ii + 1
+            axis = fig.add_subplot(nrows, ncols, cell)
+            for co in core_list:
+                if isinstance(co, TimingCore):
+                    plt.hist(co.get_param(par, tm_convert=real_tm_pars), **hist_kwargs)
+                elif isinstance(co, Core):
+                    plt.hist(co.get_param(par), **hist_kwargs)
+            if "efac" in selected_common_titles[ii]:
+                axis.set_title(
+                    selected_common_titles[ii].split("efac")[0], fontsize=titlefontsize
                 )
-                axis.axvline(val, color="k", linestyle="--")
-            elif splt_key == "COSI" and "SINI" in par_sigma:
-                sin_val, sin_err, _ = par_sigma["SINI"]
-                val = np.longdouble(np.sqrt(1 - sin_val ** 2))
-                err = np.longdouble(
-                    np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err ** 2)
+                axis.set_xlabel(label, fontsize=labelfontsize - 2)
+            elif "equad" in selected_common_titles[ii]:
+                axis.set_title(
+                    selected_common_titles[ii].split("log10")[0], fontsize=titlefontsize
                 )
-                fill_space_x = np.linspace(val - err, val + err, 20)
-                axis.fill_between(
-                    fill_space_x, axis.get_ylim()[1], color="grey", alpha=0.2
+                axis.set_xlabel(label, fontsize=labelfontsize - 2)
+            elif "ecorr" in selected_common_titles[ii]:
+                axis.set_title(
+                    selected_common_titles[ii].split("log10")[0], fontsize=titlefontsize
                 )
-                axis.axvline(val, color="k", linestyle="--")
-
-        if conf_int:
-            if isinstance(conf_int, (float, int)):
-                if conf_int < 1.0 or conf_int > 99.0:
-                    raise ValueError("conf_int must be between 1 and 99")
+                axis.set_xlabel(label, fontsize=labelfontsize - 2)
             else:
-                raise ValueError("conf_int must be an int or float")
+                axis.set_xlabel(label, fontsize=labelfontsize)
 
-            for i, core in enumerate(core_list):
-                # elif splt_key == 'COSI' and 'SINI' in par_sigma:
-                for com_par, com_title in zip(common_params_all, common_titles_all):
-                    if splt_key == com_title:
-                        low, up = core.get_param_confint(com_par, interval=conf_int)
-                        axis.fill_between(
-                            [low, up], axis.get_ylim()[1], color=f"C{i}", alpha=0.1,
-                        )
+            if "DMX" in par:
+                splt_key = ("_").join(par.split("_")[-2:])
+            else:
+                splt_key = par.split("_")[-1]
+            if par_sigma:
+                if splt_key in par_sigma:
+                    val = par_sigma[splt_key][0]
+                    err = par_sigma[splt_key][1]
+                    fill_space_x = np.linspace(val - err, val + err, 20)
+                    axis.fill_between(
+                        fill_space_x, axis.get_ylim()[1], color="grey", alpha=0.2
+                    )
+                    axis.axvline(val, color="k", linestyle="--")
+                elif splt_key == "COSI" and "SINI" in par_sigma:
+                    sin_val, sin_err, _ = par_sigma["SINI"]
+                    val = np.longdouble(np.sqrt(1 - sin_val ** 2))
+                    err = np.longdouble(
+                        np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err ** 2)
+                    )
+                    fill_space_x = np.linspace(val - err, val + err, 20)
+                    axis.fill_between(
+                        fill_space_x, axis.get_ylim()[1], color="grey", alpha=0.2
+                    )
+                    axis.axvline(val, color="k", linestyle="--")
+
+            if conf_int:
+                if isinstance(conf_int, (float, int)):
+                    if conf_int < 1.0 or conf_int > 99.0:
+                        raise ValueError("conf_int must be between 1 and 99")
+                else:
+                    raise ValueError("conf_int must be an int or float")
+
+                for i, core in enumerate(core_list):
+                    # elif splt_key == 'COSI' and 'SINI' in par_sigma:
+                    for com_par, com_title in zip(
+                        selected_common_params, selected_common_titles
+                    ):
+                        if splt_key == com_title:
+                            low, up = core.get_param_confint(com_par, interval=conf_int)
+                            axis.fill_between(
+                                [low, up], axis.get_ylim()[1], color=f"C{i}", alpha=0.1,
+                            )
         axis.set_yticks([])
     patches = []
     for jj, lab in enumerate(core_list_legend):
-        patches.append(mpl.patches.Patch(color=colors[jj], label=lab.split(":")[-1]))
+        patches.append(mpl.patches.Patch(color=colors[jj], label=lab))
 
     if preliminary:
         fig.text(txt_loc[0], txt_loc[1], txt, **txt_kwargs)
@@ -1119,10 +1139,7 @@ def fancy_plot_all_param_overlap(
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     # fig.subplots_adjust(top=0.96)
     plt.suptitle(
-        f"{psr_name} Common Parameters",
-        fontsize=suptitlefontsize,
-        x=suptitleloc[0],
-        y=suptitleloc[1],
+        suptitle, fontsize=suptitlefontsize, x=suptitleloc[0], y=suptitleloc[1],
     )
     # plt.savefig(f'Figures/{psr_name}_cfr19_common_pars_2.png', dpi=150, bbox_inches='tight')
     # plt.savefig(f'Figures/{psr_name}_12p5yr_common_pars.png', dpi=150, bbox_inches='tight')
@@ -1130,9 +1147,9 @@ def fancy_plot_all_param_overlap(
 
 
 def get_param_groups(core, selection="kep"):
-    """selection = 'all', or 'kep','gr','spin','pos','noise', 'dm', 'dmx' all joined by underscores"""
+    """selection = 'all', or 'kep','gr','spin','pos','noise', 'dm', 'chrom' 'dmx' all joined by underscores"""
     if selection == "all":
-        selection = "kep_binary_gr_spin_pos_noise_dm_dmx"
+        selection = "kep_binary_gr_pm_spin_pos_noise_dm_chrom_dmx"
     kep_pars = [
         "PB",
         "PBDOT",
@@ -1182,12 +1199,22 @@ def get_param_groups(core, selection="kep"):
     pm_pars = ["PMDEC", "PMRA", "PMELONG", "PMELAT", "PMRV", "PMBETA", "PMLAMBDA"]
 
     dm_pars = [
-        "log10_sigma",
-        "log10_ell",
-        "log10_gam_p",
-        "log10_p",
-        "log10_ell2",
-        "log10_alpha_wgt",
+        "dm_gp_log10_sigma",
+        "dm_gp_log10_ell",
+        "dm_gp_log10_gam_p",
+        "dm_gp_log10_p",
+        "dm_gp_log10_ell2",
+        "dm_gp_log10_alpha_wgt",
+        "n_earth",
+    ]
+
+    chrom_gp_pars = [
+        "chrom_gp_log10_sigma",
+        "chrom_gp_log10_ell",
+        "chrom_gp_log10_gam_p",
+        "chrom_gp_log10_p",
+        "chrom_gp_log10_ell2",
+        "chrom_gp_log10_alpha_wgt",
     ]
 
     excludes = ["lnlike", "lnprior", "chain_accept", "pt_chain_accept"]
@@ -1225,14 +1252,20 @@ def get_param_groups(core, selection="kep"):
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
         if "dm" in selection_list:
-            for p in dm_pars:
-                if ("_").join(param.split("_")[-2:]) in dm_pars and ("_").join(
-                    param.split("_")[-2:]
-                ) not in plot_params:
-                    plot_params["par"].append(param)
-                    plot_params["title"].append(
-                        param
-                    )  # (" ").join(param.split("_")[-2:]))
+            if ("_").join(param.split("_")[1:]) in dm_pars and ("_").join(
+                param.split("_")[1:]
+            ) not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(param)  # (" ").join(param.split("_")[-2:]))
+        if "chrom" in selection_list:
+            if ("_").join(param.split("_")[1:]) in chrom_gp_pars and ("_").join(
+                param.split("_")[1:]
+            ) not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(param)
+            elif param in dm_pars and param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(param)
         if "dmx" in selection_list:
             if "DMX_" in param and split_param not in plot_params:
                 plot_params["par"].append(param)
@@ -1400,6 +1433,10 @@ def mass_plot(
             "bins": 40,
         }
 
+    if "suptitle" not in fig_kwargs.keys():
+        suptitle = f"{psr_name} Mass Plots"
+    else:
+        suptitle = fig_kwargs["suptitle"]
     if "suptitlefontsize" not in fig_kwargs.keys():
         suptitlefontsize = 24
     else:
@@ -1504,16 +1541,50 @@ def mass_plot(
                     - coco.get_param(f"{psr_name}_timing_model_SINI", to_burn=True) ** 2
                 )
         co_bins = [co_Mp, co_Mc, co_COSI]
+        print(coco.label)
+        print("----------------")
         for j, ax in enumerate(axes):
             ax.hist(co_bins[j], label=core_list_legend[i], **hist_kwargs)
             ax.set_xlabel(co_labels[j], fontsize=24)
             ax.get_yaxis().set_visible(False)
             ax.tick_params(axis="x", labelsize=16)
+            if conf_int:
+                if isinstance(conf_int, (float, int)):
+                    if conf_int < 1.0 or conf_int > 99.0:
+                        raise ValueError("conf_int must be between 1 and 99")
+                else:
+                    raise ValueError("conf_int must be an int or float")
+                lower_q = (100 - conf_int) / 2
+                lower = np.percentile(co_bins[j], q=lower_q)
+                upper = np.percentile(co_bins[j], q=100 - lower_q)
+                ax.fill_between(
+                    [lower, upper], ax.get_ylim()[1], color=f"C{i}", alpha=0.1
+                )
+
+                print(co_labels[j])
+                if j == 2:
+                    print(f"Median: {np.arccos(np.median(co_bins[j]))*180/np.pi}")
+                    print(f"Upper: {np.arccos(lower)*180/np.pi}")
+                    print(f"Lower: {np.arccos(upper)*180/np.pi}")
+                    print(
+                        f"Diff Upper: {(np.arccos(lower)-np.arccos(np.median(co_bins[j])))*180/np.pi}"
+                    )
+                    print(
+                        f"Diff Lower: {(np.arccos(np.median(co_bins[j]))-np.arccos(upper))*180/np.pi}"
+                    )
+                    print("")
+                else:
+                    print(f"Median: {np.median(co_bins[j])}")
+                    print(f"Lower: {lower}")
+                    print(f"Upper: {upper}")
+                    print(f"Diff Lower: {np.median(co_bins[j])-lower}")
+                    print(f"Diff Upper: {upper-np.median(co_bins[j])}")
+                    print("")
 
     fig = plt.gcf()
     allaxes = fig.get_axes()
-    if conf_int or par_sigma:
-        for ax, splt_key in zip(allaxes[1:], ["M2", "COSI"]):
+    if par_sigma:
+        for ax, splt_key in zip(allaxes, ["Mp", "M2", "COSI"]):
             if par_sigma:
                 if splt_key in par_sigma:
                     val = par_sigma[splt_key][0]
@@ -1535,22 +1606,6 @@ def mass_plot(
                     )
                     ax.axvline(val, color="k", linestyle="--")
 
-            if conf_int:
-                if isinstance(conf_int, (float, int)):
-                    if conf_int < 1.0 or conf_int > 99.0:
-                        raise ValueError("conf_int must be between 1 and 99")
-                else:
-                    raise ValueError("conf_int must be an int or float")
-
-                for i, core in enumerate(core_list):
-                    # elif splt_key == 'COSI' and 'SINI' in par_sigma:
-                    for com_par, com_title in zip(common_params_all, common_titles_all):
-                        if splt_key == com_title:
-                            low, up = core.get_param_confint(com_par, interval=conf_int)
-                            ax.fill_between(
-                                [low, up], ax.get_ylim()[1], color=f"C{i}", alpha=0.1,
-                            )
-
     # fig = plt.gcf()
     patches = []
     for jj, lab in enumerate(core_list_legend):
@@ -1566,10 +1621,7 @@ def mass_plot(
     allaxes[0].legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     plt.suptitle(
-        f"{psr_name} Mass Plots",
-        fontsize=suptitlefontsize,
-        x=suptitleloc[0],
-        y=suptitleloc[1],
+        suptitle, fontsize=suptitlefontsize, x=suptitleloc[0], y=suptitleloc[1],
     )
 
 

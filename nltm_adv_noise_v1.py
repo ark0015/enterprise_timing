@@ -330,34 +330,22 @@ for par in psr.fitpars:
     else:
         nltm_params.append(par)
 
-    if par == "PBDOT":
-        pbdot = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
-        pbdot_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
-        print("USING PHYSICAL PBDOT. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
-        lower = pbdot - 50 * pbdot_sigma * 1e-12
-        upper = pbdot + 50 * pbdot_sigma * 1e-12
-        # lower = pbdot - 5 * pbdot_sigma * 1e-12
-        # upper = pbdot + 5 * pbdot_sigma * 1e-12
-        tm_param_dict["PBDOT"] = {
-            "prior_mu": pbdot,
-            "prior_sigma": pbdot_sigma,
-            "prior_lower_bound": lower,
-            "prior_upper_bound": upper,
-        }
-    elif par == "XDOT":
-        xdot = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
-        xdot_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
-        print("USING PHYSICAL XDOT. Val: ", xdot, "Err: ", xdot_sigma * 1e-12)
-        lower = xdot - 50 * xdot_sigma * 1e-12
-        upper = xdot + 50 * xdot_sigma * 1e-12
-        # lower = xdot - 5 * xdot_sigma * 1e-12
-        # upper = xdot + 5 * xdot_sigma * 1e-12
-        tm_param_dict["XDOT"] = {
-            "prior_mu": xdot,
-            "prior_sigma": xdot_sigma,
-            "prior_lower_bound": lower,
-            "prior_upper_bound": upper,
-        }
+    if par in ["PBDOT", "XDOT"]:
+        par_val = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
+        par_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
+        if np.log10(par_sigma) < -10.0:
+            print("USING PHYSICAL PBDOT. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
+            lower = par_val - 50 * par_sigma * 1e-12
+            upper = par_val + 50 * par_sigma * 1e-12
+            # lower = pbdot - 5 * pbdot_sigma * 1e-12
+            # upper = pbdot + 5 * pbdot_sigma * 1e-12
+            tm_param_dict["PBDOT"] = {
+                "prior_mu": par_val,
+                "prior_sigma": par_sigma * 1e-12,
+                "prior_lower_bound": lower,
+                "prior_upper_bound": upper,
+            }
+
     elif par in ["DM1", "DM2"] and par not in refit_pars:
         popt, pcov = scipy.optimize.curve_fit(dm_funk, dmx["DMXEP"], dmx["DMX_value"])
         perr = np.sqrt(np.diag(pcov))
