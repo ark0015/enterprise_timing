@@ -7,9 +7,10 @@ from copy import deepcopy
 
 import pandas as pd
 import corner
-import acor
+#import acor
+from emcee.autocorr import integrated_time, AutocorrError
 
-# import pymc3
+#import pymc3
 
 import la_forge
 import la_forge.diagnostics as dg
@@ -329,7 +330,7 @@ def check_convergence(core_list):
             print("\t Can't run Geweke test")
             pass
         try:
-            max_acl = np.unique(np.max(get_param_acorr(core.chain[:, :cut_off_idx])))[0]
+            max_acl = np.unique(np.max(get_param_acorr(core)))[0]
             print(
                 f"\t Max autocorrelation length: {max_acl}, Effective sample size: {core.chain.shape[0]/max_acl}"
             )
@@ -1036,6 +1037,7 @@ def fancy_plot_all_param_overlap(
     )
 
     fancy_labels = get_fancy_labels(common_titles_all)
+
     selected_params = get_param_groups(core_list[0], selection=selection)
 
     selected_common_params = []
@@ -1147,9 +1149,9 @@ def fancy_plot_all_param_overlap(
 
 
 def get_param_groups(core, selection="kep"):
-    """selection = 'all', or 'kep','gr','spin','pos','noise', 'dm', 'chrom' 'dmx' all joined by underscores"""
+    """selection = 'all', or 'kep','gr','spin','pos','noise', 'dm', 'chrom', 'dmx', 'fd' all joined by underscores"""
     if selection == "all":
-        selection = "kep_binary_gr_pm_spin_pos_noise_dm_chrom_dmx"
+        selection = "kep_binary_gr_pm_spin_pos_noise_dm_chrom_dmx_fd"
     kep_pars = [
         "PB",
         "PBDOT",
@@ -1181,6 +1183,8 @@ def get_param_groups(core, selection="kep"):
     pos_pars = ["RAJ", "DECJ", "ELONG", "ELAT", "BETA", "LAMBDA", "PX"]
 
     spin_pars = ["F", "F0", "F1", "F2", "P", "P1", "Offset"]
+
+    fd_pars = ["FD1","FD2","FD3","FD4","FD5"]
 
     gr_pars = [
         "H3",
@@ -1251,6 +1255,10 @@ def get_param_groups(core, selection="kep"):
             if split_param in pm_pars and split_param not in plot_params:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
+        if "fd" in selection_list:
+            if split_param in fd_pars and split_param not in plot_params:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)
         if "dm" in selection_list:
             if ("_").join(param.split("_")[1:]) in dm_pars and ("_").join(
                 param.split("_")[1:]
@@ -1294,8 +1302,12 @@ def corner_plots(
                     plot_truths["max"].append(1.0)
                 elif pp.split("_")[-1] in ["XDOT", "PBDOT"]:
                     plot_truths["val"].append(val)
-                    plot_truths["min"].append(val - err * 1e-12)
-                    plot_truths["max"].append(val + err * 1e-12)
+                    if np.log10(err) > -10.0:
+                        plot_truths["min"].append(val - err * 1e-12)
+                        plot_truths["max"].append(val + err * 1e-12)
+                    else:
+                        plot_truths["min"].append(val - err)
+                        plot_truths["max"].append(val + err)
                 else:
                     plot_truths["val"].append(val)
                     plot_truths["min"].append(val - err)
@@ -1760,32 +1772,34 @@ def plot_dist_evolution(arr, nbins=20, fracs=np.array([0.1, 0.2, 0.3, 0.4]), las
     return None
 
 
-def get_param_acorr(arr, burn=None):
+def get_param_acorr(core, burn=0.25,selection="all"):
     """
     Function to get the autocorrelation length for each parameter in a ndim array
 
     Parameters
     ==========
-    arr -- array, optional
-        Array that contains samples from an MCMC array that is samples x param
-        in shape.
+    core -- la_forge.core object
     burn -- int, optional
         Number of samples burned from beginning of array. Used when calculating
         statistics and plotting histograms. If None, burn is `len(samples)/4`
+    cut_off_idx -- int, optional
+        Sets end of parameter list to include
 
     Returns
     =======
     Array of autocorrelation lengths for each parameter
     """
-    if burn is None:
-        burn = int(0.25 * arr.shape[0])
 
-    # Do not want autocorr of acceptance rate or pt acceptance rate
-    len_rel_params = arr.shape[1] - 2
-    tau_arr = np.zeros(len_rel_params)
-    for param_idx in range(len_rel_params):
-        indv_param = arr[burn:, param_idx]
-        tau_arr[param_idx], _, _ = acor.acor(indv_param)
+    selected_params = get_param_groups(core, selection=selection)
+    burn = int(burn * core.chain.shape[0])
+    tau_arr = np.zeros(len(selected_params['par']))
+    for param_idx,param in enumerate(selected_params['par']):
+        indv_param = core.get_param(param,to_burn=False)
+        try:
+            tau_arr[param_idx] = integrated_time(indv_param,quiet=False)
+        except (AutocorrError):
+            print('Watch Out!',selected_params['title'][param_idx])
+            tau_arr[param_idx] = integrated_time(indv_param,quiet=True)
     return tau_arr
 
 
