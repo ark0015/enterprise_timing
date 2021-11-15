@@ -1798,7 +1798,7 @@ def get_param_acorr(core, burn=0.25,selection="all"):
         try:
             tau_arr[param_idx] = integrated_time(indv_param,quiet=False)
         except (AutocorrError):
-            print('Watch Out!',selected_params['title'][param_idx])
+            print('Watch Out!',param)
             tau_arr[param_idx] = integrated_time(indv_param,quiet=True)
     return tau_arr
 

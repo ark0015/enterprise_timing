@@ -515,7 +515,7 @@ else:
     backend_ch = selections.Selection(channelized_backends)
 
     # white noise parameters
-    if pal2_priors:
+    if args.pal2_priors:
         efac = parameter.Uniform(0.001, 10.0)
         equad = parameter.Uniform(-10.0, -4.0)
         ecorr = parameter.Uniform(-8.5, -4.0)
