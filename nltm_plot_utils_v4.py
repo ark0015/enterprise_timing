@@ -7,10 +7,11 @@ from copy import deepcopy
 
 import pandas as pd
 import corner
-#import acor
+
+# import acor
 from emcee.autocorr import integrated_time, AutocorrError
 
-#import pymc3
+# import pymc3
 
 import la_forge
 import la_forge.diagnostics as dg
@@ -150,7 +151,7 @@ def get_map_param(core, params, to_burn=True):
     return map_params
 
 
-def tm_delay(t2pulsar, tm_params_orig, new_params):
+def tm_delay(t2pulsar, tm_params_orig, new_params, plot=True):
     """
     Compute difference in residuals due to perturbed timing model.
 
@@ -201,6 +202,7 @@ def tm_delay(t2pulsar, tm_params_orig, new_params):
                     tm_scaled_val * tm_params_orig[tm_param][1]
                     + tm_params_orig[tm_param][0]
                 )
+
     # set to new values
     # print(tm_params_rescaled)
     # TODO: Find a way to not do this every likelihood call bc it doesn't change and it is in enterprise.psr._isort
@@ -211,11 +213,12 @@ def tm_delay(t2pulsar, tm_params_orig, new_params):
 
     # remeber to set values back to originals
     t2pulsar.vals(orig_params)
-
-    plotres(t2pulsar, new_res, residuals, tm_params_rescaled)
-
-    # Return the time-series for the pulsar
-    # return -(new_res[isort] - residuals[isort])
+    if plot:
+        plotres(t2pulsar, new_res, residuals, tm_params_rescaled)
+    else:
+        # Return the time-series for the pulsar
+        return new_res[isort], residuals[isort]
+        # return -(new_res[isort] - residuals[isort])
 
 
 def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs):
@@ -1184,7 +1187,7 @@ def get_param_groups(core, selection="kep"):
 
     spin_pars = ["F", "F0", "F1", "F2", "P", "P1", "Offset"]
 
-    fd_pars = ["FD1","FD2","FD3","FD4","FD5"]
+    fd_pars = ["FD1", "FD2", "FD3", "FD4", "FD5"]
 
     gr_pars = [
         "H3",
@@ -1772,7 +1775,7 @@ def plot_dist_evolution(arr, nbins=20, fracs=np.array([0.1, 0.2, 0.3, 0.4]), las
     return None
 
 
-def get_param_acorr(core, burn=0.25,selection="all"):
+def get_param_acorr(core, burn=0.25, selection="all"):
     """
     Function to get the autocorrelation length for each parameter in a ndim array
 
@@ -1792,14 +1795,14 @@ def get_param_acorr(core, burn=0.25,selection="all"):
 
     selected_params = get_param_groups(core, selection=selection)
     burn = int(burn * core.chain.shape[0])
-    tau_arr = np.zeros(len(selected_params['par']))
-    for param_idx,param in enumerate(selected_params['par']):
-        indv_param = core.get_param(param,to_burn=False)
+    tau_arr = np.zeros(len(selected_params["par"]))
+    for param_idx, param in enumerate(selected_params["par"]):
+        indv_param = core.get_param(param, to_burn=False)
         try:
-            tau_arr[param_idx] = integrated_time(indv_param,quiet=False)
+            tau_arr[param_idx] = integrated_time(indv_param, quiet=False)
         except (AutocorrError):
-            print('Watch Out!',param)
-            tau_arr[param_idx] = integrated_time(indv_param,quiet=True)
+            print("Watch Out!", param)
+            tau_arr[param_idx] = integrated_time(indv_param, quiet=True)
     return tau_arr
 
 

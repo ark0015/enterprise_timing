@@ -103,9 +103,7 @@ if args.psr_name in parfile:
     is_psr = True
 
 if not is_psr:
-    raise ValueError(
-        f"{args.psr_name} does not exist in {parfile} or {timfile}."
-    )
+    raise ValueError(f"{args.psr_name} does not exist in {parfile} or {timfile}.")
 
 outdir = f"{current_path}/{args.psr_name}/chains/misc/{args.run_num}"
 # create new attribute for enterprise pulsar object
@@ -130,7 +128,7 @@ ecorr = parameter.Uniform(-8.5, -5.0)
 ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
 eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
 
-#ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch,coefficients=args.coefficients)
+# ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch,coefficients=args.coefficients)
 ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
 
 # combine signals
@@ -140,9 +138,7 @@ model = s(psr)
 
 # set up PTA
 pta = signal_base.PTA([model])
-psampler = sampler.setup_sampler(
-    pta, outdir=outdir, resume=args.resume, timing=True
-)
+psampler = sampler.setup_sampler(pta, outdir=outdir, resume=args.resume, timing=True)
 
 
 for p in pta.params:
@@ -152,30 +148,30 @@ for p in pta.params:
     except:
         print(p.size)
         print("Can't sample parameter")
-    print('--------------')
+    print("--------------")
 
 x0_dict = {}
 cpar = []
 for p in pta.params:
     print(p)
     if "coefficients" in p.name:
-        #x0_dict.update({p.name:np.random.randn(p.size)})
-        print('not adding')
+        # x0_dict.update({p.name:np.random.randn(p.size)})
+        print("not adding")
     else:
-        x0_dict.update({p.name:p.sample()})
+        x0_dict.update({p.name: p.sample()})
 
 print(x0_dict)
-print('----------------------')
+print("----------------------")
 psc = utils.get_coefficients(pta, x0_dict, variance=False)
 print(psc)
-for key,val in psc.items():
+for key, val in psc.items():
     print(key)
-    if not isinstance(val,(float,int)):
+    if not isinstance(val, (float, int)):
         print(len(val))
     else:
         print(val)
     print(val)
-    print('')
+    print("")
 """
 psampler.sample(
     [x0 for x0 in x0_dict.values()],

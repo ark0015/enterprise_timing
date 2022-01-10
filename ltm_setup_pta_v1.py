@@ -5,8 +5,8 @@ from collections import OrderedDict
 current_path = os.getcwd()
 splt_path = current_path.split("/")
 top_path_idx = splt_path.index("nanograv")
-#top_path_idx = splt_path.index("akaiser")
-#top_path_idx = splt_path.index("ark0015")
+# top_path_idx = splt_path.index("akaiser")
+# top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -30,7 +30,8 @@ from enterprise_extensions.sampler import JumpProposal
 from enterprise_extensions.timing import timing_block
 from enterprise_extensions.blocks import channelized_backends
 
-def pta_setup(psr,coefficients=False):
+
+def pta_setup(psr, coefficients=False):
     # create new attribute for enterprise pulsar object
     # UNSURE IF NECESSARY
     psr.tm_params_orig = OrderedDict.fromkeys(psr.t2pulsar.pars())
@@ -53,7 +54,7 @@ def pta_setup(psr,coefficients=False):
     ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
     eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
 
-    #ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch,coefficients=coefficients)
+    # ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch,coefficients=coefficients)
     ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
 
     # combine signals
@@ -66,18 +67,19 @@ def pta_setup(psr,coefficients=False):
 
     return pta
 
-def get_coeffs(pta,x0_dict):
+
+def get_coeffs(pta, x0_dict):
     print(x0_dict)
-    print('----------------------')
-    print('')
+    print("----------------------")
+    print("")
     psc = utils.get_coefficients(pta, x0_dict, variance=False)
     print(psc)
-    for key,val in psc.items():
+    for key, val in psc.items():
         print(key)
-        if not isinstance(val,(float,int)):
+        if not isinstance(val, (float, int)):
             print(len(val))
         else:
             print(val)
         print(val)
-        print('')
+        print("")
     return psc

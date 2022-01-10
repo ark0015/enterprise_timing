@@ -214,6 +214,10 @@ elif args.datarelease == "15yr" and args.psr_name == "J0709+0458":
     )
     # timfile = top_dir + "/{}/{}/J0709+0458.L-wide.PUPPI.15y.x.nb.tim".format(args.datarelease, args.psr_name)
     print("Using {} data".format(args.datarelease))
+elif args.datarelease == "15yr_v1":
+    datadir = f"{top_dir}/{args.datarelease}"
+    parfile = datadir + f"/stripped_tempo2_parfiles/{args.psr_name}.par"
+    timfile = datadir + f"/v1_t2_timfiles/{args.psr_name}.tim"
 else:
     datadir = top_dir + "/{}".format(args.datarelease)
     parfiles = sorted(glob.glob(datadir + "/par/*.par"))
