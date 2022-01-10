@@ -15,9 +15,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-# top_path_idx = splt_path.index("nanograv")
+top_path_idx = splt_path.index("nanograv")
 # top_path_idx = splt_path.index("akaiser")
-top_path_idx = splt_path.index("ark0015")
+# top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -169,15 +169,15 @@ elif args.datarelease == "12p5yr":
         if args.psr_name == "J1713+0747":
             parfile = (
                 top_dir
-                + "/{}/wideband/par/{}_NANOGrav_12yv3.wb.gls.t2.par".format(
+                + "/{}/wideband/par/{}_NANOGrav_12yv4.wb.gls.t2.par".format(
                     args.datarelease, args.psr_name
                 )
             )
         else:
-            parfile = top_dir + "/{}/wideband/par/{}_NANOGrav_12yv3.wb.gls.par".format(
+            parfile = top_dir + "/{}/wideband/par/{}_NANOGrav_12yv4.wb.gls.par".format(
                 args.datarelease, args.psr_name
             )
-        timfile = top_dir + "/{}/wideband/tim/{}_NANOGrav_12yv3.wb.tim".format(
+        timfile = top_dir + "/{}/wideband/tim/{}_NANOGrav_12yv4.wb.tim".format(
             args.datarelease, args.psr_name
         )
         print("Using {} Wideband data".format(args.datarelease))
@@ -185,19 +185,19 @@ elif args.datarelease == "12p5yr":
         if args.psr_name == "J1713+0747":
             parfile = (
                 top_dir
-                + "/{}/narrowband/par/{}_NANOGrav_12yv3.gls.t2.par".format(
+                + "/{}/narrowband/par/{}_NANOGrav_12yv4.gls.t2.par".format(
                     args.datarelease, args.psr_name
                 )
             )
         elif args.psr_name == "J1640+2224":
-            parfile = top_dir + "/{}/{}/{}_NANOGrav_12yv3.gls.T2.par".format(
+            parfile = top_dir + "/{}/{}/{}_NANOGrav_12yv4.gls.T2.par".format(
                 args.datarelease, args.psr_name, args.psr_name
             )
         else:
-            parfile = top_dir + "/{}/narrowband/par/{}_NANOGrav_12yv3.gls.par".format(
+            parfile = top_dir + "/{}/narrowband/par/{}_NANOGrav_12yv4.gls.par".format(
                 args.datarelease, args.psr_name
             )
-        timfile = top_dir + "/{}/narrowband/tim/{}_NANOGrav_12yv3.tim".format(
+        timfile = top_dir + "/{}/narrowband/tim/{}_NANOGrav_12yv4.tim".format(
             args.datarelease, args.psr_name
         )
         print("Using {} Narrowband data".format(args.datarelease))
@@ -205,14 +205,18 @@ elif args.datarelease == "prelim15yr":
     parfile = top_dir + "/{}/{}.working.par".format(args.datarelease, args.psr_name)
     timfile = top_dir + "/{}/{}.working.tim".format(args.datarelease, args.psr_name)
     print("Using {} data".format(args.datarelease))
-elif args.datarelease == "15yr" and args.psr_name == "J0709+0458":
-    parfile = top_dir + "/{}/{}/T2ized_J0709+0458_PINT_20210303.nb.par".format(
-        args.datarelease, args.psr_name
-    )
-    timfile = top_dir + "/{}/{}/J0709+0458.combined.nb.tim".format(
-        args.datarelease, args.psr_name
-    )
-    # timfile = top_dir + "/{}/{}/J0709+0458.L-wide.PUPPI.15y.x.nb.tim".format(args.datarelease, args.psr_name)
+elif args.datarelease == "15yr":
+    if args.psr_name == "J0709+0458":
+        parfile = top_dir + "/{}/{}/T2ized_J0709+0458_PINT_20210303.nb.par".format(
+            args.datarelease, args.psr_name
+        )
+        timfile = top_dir + "/{}/{}/J0709+0458.combined.nb.tim".format(
+            args.datarelease, args.psr_name
+        )
+        # timfile = top_dir + "/{}/{}/J0709+0458.L-wide.PUPPI.15y.x.nb.tim".format(args.datarelease, args.psr_name)
+    else:
+        parfile = top_dir + f"/{args.datarelease}_v1/stripped_tempo2_parfiles/{args.psr_name}.par"
+        timfile = top_dir + f"/{args.datarelease}_v1/v1_t2_timfiles/{args.psr_name}.tim"
     print("Using {} data".format(args.datarelease))
 elif args.datarelease == "15yr_v1":
     datadir = f"{top_dir}/{args.datarelease}"
@@ -270,7 +274,7 @@ else:
     if not args.resume:
         print("nothing!")
         # raise ValueError("{} already exists!".format(outdir))
-
+"""
 noisedict = {}
 if args.datarelease in ["12p5yr", "cfr+19"]:
     noisefiles = sorted(glob.glob(top_dir + "/12p5yr/*.json"))
@@ -298,6 +302,19 @@ elif args.datarelease in ["5yr", "9yr", "11yr"]:
                     noisedict[og_key] = tmpnoisedict[og_key]
 else:
     noisedict = None
+"""
+if not args.white_var:
+    with open(parfile, "r") as f:
+        lines = f.readlines()
+    noisedict = {}
+    for line in lines:
+        splt_line = line.split()
+        if "T2EFAC" in splt_line[0]:
+            noisedict[f"{args.psr_name}_{splt_line[2]}_efac"] = np.float64(splt_line[3])
+        if "T2EQUAD" in splt_line[0]:
+            noisedict[f"{args.psr_name}_{splt_line[2]}_log10_equad"] = np.log10(np.float64(splt_line[3]))
+        if "ECORR" in splt_line[0]:
+            noisedict[f"{args.psr_name}_{splt_line[2]}_log10_ecorr"] = np.log10(np.float64(splt_line[3]))
 
 # filter
 is_psr = False
@@ -443,28 +460,30 @@ if args.tm_var and not args.tm_linear:
                 coefficients=False,
                 select=None,
             )
-        # define selection by observing backend
-        backend = selections.Selection(selections.by_backend)
-        # define selection by nanograv backends
-        backend_ng = selections.Selection(selections.nanograv_backends)
-        backend_ch = selections.Selection(channelized_backends)
 
-        # white noise parameters
-        efac = parameter.Uniform(0.001, 10.0)
-        equad = parameter.Uniform(-10.0, -4.0)
-        ecorr = parameter.Uniform(-8.5, -4.0)
+        if args.white_var:
+            # define selection by observing backend
+            backend = selections.Selection(selections.by_backend)
+            # define selection by nanograv backends
+            backend_ng = selections.Selection(selections.nanograv_backends)
+            backend_ch = selections.Selection(channelized_backends)
 
-        # white noise signals
-        ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
-        eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
+            # white noise parameters
+            efac = parameter.Uniform(0.001, 10.0)
+            equad = parameter.Uniform(-10.0, -4.0)
+            ecorr = parameter.Uniform(-8.5, -4.0)
 
-        if args.Ecorr_gp_basis:
-            ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch)
-        else:
-            ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
+            # white noise signals
+            ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
+            eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
 
-        # combine signals
-        s += ef + eq + ec
+            if args.Ecorr_gp_basis:
+                ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch)
+            else:
+                ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
+
+            # combine signals
+            s += ef + eq + ec
         model = s(psr)
 
         # set up PTA
@@ -512,36 +531,48 @@ else:
             psr.tm_params_orig[key] = (psr.t2pulsar[key].val, psr.t2pulsar[key].err)
         s = gp_signals.TimingModel(use_svd=False, normed=True, coefficients=False)
 
-    # define selection by observing backend
-    backend = selections.Selection(selections.by_backend)
-    # define selection by nanograv backends
-    backend_ng = selections.Selection(selections.nanograv_backends)
-    backend_ch = selections.Selection(channelized_backends)
+    # red noise
+    if args.red_var:
+        s += red_noise_block(
+            psd="powerlaw",
+            prior="uniform",
+            components=30,
+            gamma_val=None,
+            coefficients=False,
+            select=None,
+        )
 
-    # white noise parameters
-    if args.pal2_priors:
-        efac = parameter.Uniform(0.001, 10.0)
-        equad = parameter.Uniform(-10.0, -4.0)
-        ecorr = parameter.Uniform(-8.5, -4.0)
-    else:
-        efac = parameter.Uniform(0.01, 10.0)
-        equad = parameter.Uniform(-8.5, -5.0)
-        ecorr = parameter.Uniform(-8.5, -5.0)
+    if args.white_var:
+        # define selection by observing backend
+        backend = selections.Selection(selections.by_backend)
+        # define selection by nanograv backends
+        backend_ng = selections.Selection(selections.nanograv_backends)
+        backend_ch = selections.Selection(channelized_backends)
 
-    # white noise signals
-    ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
-    eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
+        # white noise parameters
+        if args.pal2_priors:
+            efac = parameter.Uniform(0.001, 10.0)
+            equad = parameter.Uniform(-10.0, -4.0)
+            ecorr = parameter.Uniform(-8.5, -4.0)
+        else:
+            efac = parameter.Uniform(0.01, 10.0)
+            equad = parameter.Uniform(-8.5, -5.0)
+            ecorr = parameter.Uniform(-8.5, -5.0)
 
-    if args.Ecorr_gp_basis:
-        ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch)
-    else:
-        ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
+        # white noise signals
+        ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
+        eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
 
-    # combine signals
-    if args.incTimingModel:
-        s += ef + eq + ec
-    else:
-        s = ef + eq + ec
+        if args.Ecorr_gp_basis:
+            ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch)
+        else:
+            ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
+
+        # combine signals
+        if args.incTimingModel:
+            s += ef + eq + ec
+        else:
+            s = ef + eq + ec
 
     model = s(psr)
 
