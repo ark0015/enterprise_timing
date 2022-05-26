@@ -15,10 +15,13 @@ class TimingHyperModel(HyperModel):
     """Used to adapt Hypermodel class with timing changes"""
 
     def __init__(
-        self, models, log_weights=None,
+        self,
+        models,
+        log_weights=None,
     ):
         super().__init__(
-            models, log_weights=None,
+            models,
+            log_weights=None,
         )
         self.tm_groups = []
         self.special_idxs = []
@@ -138,7 +141,7 @@ class TimingHyperModel(HyperModel):
         ndim = len(self.param_names)
 
         # initial jump covariance matrix
-        cov = np.diag(np.ones(ndim) * 1 ** 2)  ## used to be 0.1
+        cov = np.diag(np.ones(ndim) * 1**2)  ## used to be 0.1
 
         # parameter groupings
         if groups is None:

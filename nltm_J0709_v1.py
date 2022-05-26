@@ -136,7 +136,10 @@ add_bool_arg(
     True,
 )
 add_bool_arg(
-    parser, "pal2_priors", "Whether to use PAL2 WN priors (DEFAULT: False)", False,
+    parser,
+    "pal2_priors",
+    "Whether to use PAL2 WN priors (DEFAULT: False)",
+    False,
 )
 
 args = parser.parse_args()

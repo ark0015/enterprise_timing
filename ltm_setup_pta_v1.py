@@ -53,13 +53,14 @@ def pta_setup(psr, tnequad=False, coefficients=False):
     # white noise signals
     # white noise signals
     if tnequad:
-        efeq = white_signals.MeasurementNoise(efac=efac,
-                                              selection=backend, name=None)
-        efeq += white_signals.TNEquadNoise(log10_tnequad=equad,
-                                           selection=backend, name=None)
+        efeq = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
+        efeq += white_signals.TNEquadNoise(
+            log10_tnequad=equad, selection=backend, name=None
+        )
     else:
-        efeq = white_signals.MeasurementNoise(efac=efac, log10_t2equad=equad,
-                                              selection=backend, name=None)
+        efeq = white_signals.MeasurementNoise(
+            efac=efac, log10_t2equad=equad, selection=backend, name=None
+        )
 
     # ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch,coefficients=coefficients)
     ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)

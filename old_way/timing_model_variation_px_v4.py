@@ -191,7 +191,7 @@ pta = models.model_general(
 params = pta.param_names
 ndim = len(params)
 # initial jump covariance matrix
-cov = np.diag(np.ones(ndim) * 0.1 ** 2)
+cov = np.diag(np.ones(ndim) * 0.1**2)
 
 # parameter groupings
 groups = sampler.get_parameter_groups(pta)

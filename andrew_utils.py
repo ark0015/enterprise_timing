@@ -602,7 +602,7 @@ def model_nltm(
         modes, wgts = model_utils.linBinning(
             Tspan, nmodes_log, 1.0 / fmin / Tspan, common_components, nmodes_log
         )
-        wgts = wgts ** 2.0
+        wgts = wgts**2.0
 
     if red_var:
         # red noise

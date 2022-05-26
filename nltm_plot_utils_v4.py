@@ -181,7 +181,7 @@ def tm_delay(t2pulsar, tm_params_orig, new_params, plot=True):
             if tm_param == "COSI":
                 # Switch for sampling in COSI, but using SINI in libstempo
                 tm_params_rescaled["SINI"] = np.longdouble(
-                    np.sqrt(1 - tm_scaled_val ** 2)
+                    np.sqrt(1 - tm_scaled_val**2)
                 )
             else:
                 tm_params_rescaled[tm_param] = np.longdouble(tm_scaled_val)
@@ -193,7 +193,7 @@ def tm_delay(t2pulsar, tm_params_orig, new_params, plot=True):
                     + tm_params_orig[tm_param][0]
                 )
                 tm_params_rescaled["SINI"] = np.longdouble(
-                    np.sqrt(1 - rescaled_COSI ** 2)
+                    np.sqrt(1 - rescaled_COSI**2)
                 )
                 # print("Rescaled COSI used to find SINI", np.longdouble(rescaled_COSI))
                 # print("rescaled SINI", tm_params_rescaled["SINI"])
@@ -226,8 +226,8 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
 
     t, errs = psr.toas(), psr.toaerrs
 
-    meannewres = np.sqrt(np.mean(new_res ** 2)) / 1e-6
-    meanoldres = np.sqrt(np.mean(old_res ** 2)) / 1e-6
+    meannewres = np.sqrt(np.mean(new_res**2)) / 1e-6
+    meanoldres = np.sqrt(np.mean(old_res**2)) / 1e-6
 
     if (not deleted) and np.any(psr.deleted != 0):
         new_res, old_res, t, errs = (
@@ -303,7 +303,7 @@ def plotres(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs
     plt.xlabel(r"MJD")
     plt.ylabel(r"res [$\mu s$]")
     plt.title(
-        fr"{psr.name}: RMS, Old Res = {meanoldres:.3f} $\mu s$, New Res = {meannewres:.3f} $\mu s$"
+        rf"{psr.name}: RMS, Old Res = {meanoldres:.3f} $\mu s$, New Res = {meannewres:.3f} $\mu s$"
     )
 
 
@@ -345,7 +345,7 @@ def check_convergence(core_list):
 
 def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
     """Makes comparison table of the form:
-    Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma 
+    Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma
     TODO: allow for selection of subparameters"""
     pd.set_option("max_rows", None)
     plot_params = get_param_groups(core, selection=selection)
@@ -442,8 +442,8 @@ def residual_comparison(
     for par in t2pulsar.pars():
         if par == "SINI" and "COSI" in core.tm_pars_orig.keys():
             sin_val, sin_err, _ = chain_tm_params_orig[par]
-            val = np.longdouble(np.sqrt(1 - sin_val ** 2))
-            err = np.longdouble(np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err ** 2))
+            val = np.longdouble(np.sqrt(1 - sin_val**2))
+            err = np.longdouble(np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2))
             chain_tm_params_orig["COSI"] = [val, err, "physical"]
             chain_tm_delay_kwargs["COSI"] = core_timing_dict[
                 core.params[core_titles.index("COSI")]
@@ -694,9 +694,9 @@ def plot_all_param_overlap(
                         ax.axvline(val, color="k", linestyle="--")
                     elif splt_key == "COSI" and "SINI" in par_sigma:
                         sin_val, sin_err, _ = par_sigma["SINI"]
-                        val = np.longdouble(np.sqrt(1 - sin_val ** 2))
+                        val = np.longdouble(np.sqrt(1 - sin_val**2))
                         err = np.longdouble(
-                            np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err ** 2)
+                            np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
                         )
                         fill_space_x = np.linspace(val - err, val + err, 20)
                         ax.fill_between(
@@ -737,7 +737,10 @@ def plot_all_param_overlap(
         fig.legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
         fig.subplots_adjust(wspace=wspace, hspace=hspace)
         plt.suptitle(
-            suptitle, fontsize=suptitlefontsize, x=suptitleloc[0], y=suptitleloc[1],
+            suptitle,
+            fontsize=suptitlefontsize,
+            x=suptitleloc[0],
+            y=suptitleloc[1],
         )
         plt.show()
         plt.close()
@@ -873,9 +876,9 @@ def plot_other_param_overlap(
                 if splt_key == "COSI" or splt_key == "SINI" and "SINI" in par_sigma:
                     if not plotted_cosi:
                         sin_val, sin_err, _ = par_sigma["SINI"]
-                        val = np.longdouble(np.sqrt(1 - sin_val ** 2))
+                        val = np.longdouble(np.sqrt(1 - sin_val**2))
                         err = np.longdouble(
-                            np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err ** 2)
+                            np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
                         )
                         fill_space_x = np.linspace(val - err, val + err, 20)
                         plt.fill_between(
@@ -1106,9 +1109,9 @@ def fancy_plot_all_param_overlap(
                     axis.axvline(val, color="k", linestyle="--")
                 elif splt_key == "COSI" and "SINI" in par_sigma:
                     sin_val, sin_err, _ = par_sigma["SINI"]
-                    val = np.longdouble(np.sqrt(1 - sin_val ** 2))
+                    val = np.longdouble(np.sqrt(1 - sin_val**2))
                     err = np.longdouble(
-                        np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err ** 2)
+                        np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
                     )
                     fill_space_x = np.linspace(val - err, val + err, 20)
                     axis.fill_between(
@@ -1131,7 +1134,10 @@ def fancy_plot_all_param_overlap(
                         if splt_key == com_title:
                             low, up = core.get_param_confint(com_par, interval=conf_int)
                             axis.fill_between(
-                                [low, up], axis.get_ylim()[1], color=f"C{i}", alpha=0.1,
+                                [low, up],
+                                axis.get_ylim()[1],
+                                color=f"C{i}",
+                                alpha=0.1,
                             )
         axis.set_yticks([])
     patches = []
@@ -1144,7 +1150,10 @@ def fancy_plot_all_param_overlap(
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     # fig.subplots_adjust(top=0.96)
     plt.suptitle(
-        suptitle, fontsize=suptitlefontsize, x=suptitleloc[0], y=suptitleloc[1],
+        suptitle,
+        fontsize=suptitlefontsize,
+        x=suptitleloc[0],
+        y=suptitleloc[1],
     )
     # plt.savefig(f'Figures/{psr_name}_cfr19_common_pars_2.png', dpi=150, bbox_inches='tight')
     # plt.savefig(f'Figures/{psr_name}_12p5yr_common_pars.png', dpi=150, bbox_inches='tight')
@@ -1400,18 +1409,18 @@ def mass_pulsar(PB, A1, SINI, M2, errors={}):
     """
     T_sun = 4.925490947e-6  # conversion from solar masses to seconds
     nb = 2 * np.pi / PB / 86400
-    mf = nb ** 2 * A1 ** 3 / T_sun
+    mf = nb**2 * A1**3 / T_sun
 
     if errors:
         mp_err_sqrd = (
-            ((3 / 2) * np.sqrt(M2 * SINI ** 3 / mf) - 1) ** 2 * errors["M2"] ** 2
-            + (((3 / 2) * np.sqrt(M2 ** 3 * SINI / mf)) ** 2 * errors["SINI"] ** 2)
+            ((3 / 2) * np.sqrt(M2 * SINI**3 / mf) - 1) ** 2 * errors["M2"] ** 2
+            + (((3 / 2) * np.sqrt(M2**3 * SINI / mf)) ** 2 * errors["SINI"] ** 2)
             + (
-                (np.sqrt(M2 ** 3 * SINI ** 3 / (2 * np.pi) ** 2)) ** 2
+                (np.sqrt(M2**3 * SINI**3 / (2 * np.pi) ** 2)) ** 2
                 * (errors["PB"] / 8600) ** 2
             )
             + (
-                ((3 / 2) * np.sqrt(M2 ** 2 * SINI / nb ** 2 / T_sun / A1)) ** 2
+                ((3 / 2) * np.sqrt(M2**2 * SINI / nb**2 / T_sun / A1)) ** 2
                 * errors["A1"] ** 2
             )
         )
@@ -1508,7 +1517,7 @@ def mass_plot(
                     coco.get_param(
                         f"{psr_name}_timing_model_A1", to_burn=True, tm_convert=True
                     ),
-                    np.sqrt((1 - co_COSI ** 2)),
+                    np.sqrt((1 - co_COSI**2)),
                     coco.get_param(
                         f"{psr_name}_timing_model_M2", to_burn=True, tm_convert=True
                     ),
@@ -1542,7 +1551,7 @@ def mass_plot(
                 co_Mp = mass_pulsar(
                     coco.get_param(f"{psr_name}_timing_model_PB", to_burn=True),
                     coco.get_param(f"{psr_name}_timing_model_A1", to_burn=True),
-                    np.sqrt((1 - co_COSI ** 2)),
+                    np.sqrt((1 - co_COSI**2)),
                     coco.get_param(f"{psr_name}_timing_model_M2", to_burn=True),
                 )
             else:
@@ -1615,9 +1624,9 @@ def mass_plot(
                     ax.axvline(val, color="k", linestyle="--")
                 elif splt_key == "COSI" and "SINI" in par_sigma:
                     sin_val, sin_err, _ = par_sigma["SINI"]
-                    val = np.longdouble(np.sqrt(1 - sin_val ** 2))
+                    val = np.longdouble(np.sqrt(1 - sin_val**2))
                     err = np.longdouble(
-                        np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err ** 2)
+                        np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
                     )
                     fill_space_x = np.linspace(val - err, val + err, 20)
                     ax.fill_between(
@@ -1640,7 +1649,10 @@ def mass_plot(
     allaxes[0].legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     plt.suptitle(
-        suptitle, fontsize=suptitlefontsize, x=suptitleloc[0], y=suptitleloc[1],
+        suptitle,
+        fontsize=suptitlefontsize,
+        x=suptitleloc[0],
+        y=suptitleloc[1],
     )
 
 
@@ -1649,13 +1661,13 @@ def mass_plot(
 def geweke_check(chain, burn_frac=None, threshold=0.25):
     """
     Function to check for stationarity of MCMC chain using the Geweke diagnostic from arviz.geweke
-    
+
     Parameters
     ============
     chain -- N-dimensional MCMC posterior chain. Assumes rows = samples, columns = parameters.
     burn_frac -- Burn-in fraction; Default: None
     threshold -- Threshold to determine failure of stationarity for given chain; Default: 0.25
-    
+
     Returns
     ============
     nc_idx -- index of parameters in the chain whose samples fail the Geweke test
@@ -1703,7 +1715,7 @@ def geweke_check(chain, burn_frac=None, threshold=0.25):
 def geweke_plot(arr, threshold=0.25, first=0.1, last=0.5, intervals=10):
     """
     Function to plot the z-score from arviz.geweke with threshold
-    
+
     Parameters
     ===========
     arr -- Input (1-D) array
@@ -1711,7 +1723,7 @@ def geweke_plot(arr, threshold=0.25, first=0.1, last=0.5, intervals=10):
     first -- First fraction of arr; Default: 0.1
     last -- Last fraction of arr; Default: 0.5
     intervals -- Number of intervals of `first` fraction of arr to compute z-score
-    
+
     Returns
     ===========
     Plots the Geweke diagnostic plot. For stationary chains, the z-score should oscillate between
@@ -1735,14 +1747,14 @@ def geweke_plot(arr, threshold=0.25, first=0.1, last=0.5, intervals=10):
 def plot_dist_evolution(arr, nbins=20, fracs=np.array([0.1, 0.2, 0.3, 0.4]), last=0.5):
     """
     Function to plot histograms of different fractions used in Geweke test
-    
+
     Parameters
     ===========
     arr -- Input (1-D) array
     nbins -- Number of bins in histograms; Default: 20
     fracs -- Starting fractions of arr to plot; Default: [0.1, 0.2, 0.3, 0.4]
     last -- Final fraction of arr to plot; Default: 0.5
-    
+
     Returns
     ===========
     Plots of histograms of given fractions overlayed together.

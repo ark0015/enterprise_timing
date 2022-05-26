@@ -58,10 +58,18 @@ def get_psrs(psrlist, datareleases):
         # filter
         for psr in psrlist:
             parfiles = np.concatenate(
-                (parfiles, [x for x in tmp_parfiles if psr in x],), axis=0,
+                (
+                    parfiles,
+                    [x for x in tmp_parfiles if psr in x],
+                ),
+                axis=0,
             )
             timfiles = np.concatenate(
-                (timfiles, [x for x in tmp_timfiles if psr in x],), axis=0,
+                (
+                    timfiles,
+                    [x for x in tmp_timfiles if psr in x],
+                ),
+                axis=0,
             )
     psrs = []
     for p, t in zip(parfiles, timfiles):
@@ -642,7 +650,11 @@ def get_combined_rescaled_chain_dict(chain_dict, pardict, dataset, **kwargs):
                             rescaled_chain_dict = rescaled_chain_dict_comb
             else:
                 print(
-                    px_prior, "not in", prior, "dict:", chain_dict[prior].keys(),
+                    px_prior,
+                    "not in",
+                    prior,
+                    "dict:",
+                    chain_dict[prior].keys(),
                 )
 
     return rescaled_chain_dict_comb

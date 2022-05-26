@@ -55,11 +55,11 @@ class TimingConfiguration:
         )
 
     def get_source(self):
-        """ Return the source name """
+        """Return the source name"""
         return self.config["source"]
 
     def get_compare_model(self):
-        """ Return the timing model file to compare with """
+        """Return the timing model file to compare with"""
         if (
             "compare-model" in self.config.keys()
             and self.config["compare-model"] is not None
@@ -157,13 +157,13 @@ class TimingConfiguration:
 
     def check_simultaneous(self, toas, backend1, backend2, warn=False):
         """Cut overlapped TOAs from the specified backends (simul)
-    
+
         Assumes TOAs overlap if they are taken on the same day with the
         same receiver, should be fine for nanograv but could be made
         more picky to catch all cases. be1 is the backend to keep
         and be2 will be commented (e.g. PUPPI/ASP respectively). Also
         both toas will be marked with -simul flags.
-    
+
         Parameters:
         ===========
         toas [pint.TOA]: PINT TOA object
@@ -199,7 +199,7 @@ class TimingConfiguration:
             apply_cut_select(toas, f"simultaneous {backend1}/{backend2} observations")
 
     def check_file_outliers(self, toas, outpct_threshold=8.0):
-        """ Check for files where Noutliers > nout_threshold, cut files where True (maxout)
+        """Check for files where Noutliers > nout_threshold, cut files where True (maxout)
 
         Parameters
         ==========
@@ -234,7 +234,7 @@ class TimingConfiguration:
             )
 
     def manual_cuts(self, toas, warn=False):
-        """ Apply manual cuts after everything else and warn if redundant """
+        """Apply manual cuts after everything else and warn if redundant"""
         toas = self.apply_ignore(toas, specify_keys=["bad-toa"], warn=warn)
         apply_cut_select(toas, reason="manual cuts, specified keys")
 
@@ -242,13 +242,13 @@ class TimingConfiguration:
         apply_cut_select(toas, reason="manual cuts, specified keys")
 
     def get_bipm(self):
-        """ Return the bipm string """
+        """Return the bipm string"""
         if "bipm" in self.config.keys():
             return self.config["bipm"]
         return None  # return some default value instead?
 
     def get_ephem(self):
-        """ Return the ephemeris string """
+        """Return the ephemeris string"""
         if "ephem" in self.config.keys():
             return self.config["ephem"]
         return None  # return some default value instead?
@@ -269,32 +269,32 @@ class TimingConfiguration:
             )
 
     def get_fitter(self):
-        """ Return the fitter string (do more?) """
+        """Return the fitter string (do more?)"""
         if "fitter" in self.config.keys():
             return self.config["fitter"]
         return None
 
     def construct_fitter(self, to, mo):
-        """ Return the fitter, tracking pulse numbers if available """
+        """Return the fitter, tracking pulse numbers if available"""
         fitter_name = self.config["fitter"]
         fitter_class = getattr(pint.fitter, fitter_name)
         return fitter_class(to, mo)
 
     def get_toa_type(self):
-        """ Return the toa-type string """
+        """Return the toa-type string"""
         if "toa-type" in self.config.keys():
             return self.config["toa-type"]
         return None
 
     def get_outfile_basename(self, ext=""):
-        """ Return source.[nw]b basename (e.g. J1234+5678.nb) """
+        """Return source.[nw]b basename (e.g. J1234+5678.nb)"""
         basename = f"{self.get_source()}.{self.get_toa_type().lower()}"
         if ext:
             basename = ".".join([basename, ext])
         return basename
 
     def get_niter(self):
-        """ Return an integer of the number of iterations to fit """
+        """Return an integer of the number of iterations to fit"""
         if "n-iterations" in self.config.keys():
             return int(self.config["n-iterations"])
         return 1
@@ -318,31 +318,31 @@ class TimingConfiguration:
         return None
 
     def get_snr_cut(self):
-        """ Return value of the TOA S/N cut """
+        """Return value of the TOA S/N cut"""
         if "snr-cut" in self.config["ignore"].keys():
             return self.config["ignore"]["snr-cut"]
         return None  # return some default value instead?
 
     def get_bad_files(self):
-        """ Return list of bad files """
+        """Return list of bad files"""
         if "bad-file" in self.config["ignore"].keys():
             return self.config["ignore"]["bad-file"]
         return None
 
     def get_bad_ranges(self):
-        """ Return list of bad file ranges by MJD ([MJD1,MJD2])"""
+        """Return list of bad file ranges by MJD ([MJD1,MJD2])"""
         if "bad-range" in self.config["ignore"].keys():
             return self.config["ignore"]["bad-range"]
         return None
 
     def get_bad_toas(self):
-        """ Return list of bad TOAs (lists: [filename, channel, subint]) """
+        """Return list of bad TOAs (lists: [filename, channel, subint])"""
         if "bad-toa" in self.config["ignore"].keys():
             return self.config["ignore"]["bad-toa"]
         return None
 
     def get_investigation_files(self):
-        """ Makes a list from which the timer can choose which files they'd like to manually inspect"""
+        """Makes a list from which the timer can choose which files they'd like to manually inspect"""
         ff_list = sorted(
             glob.glob("/nanograv/timing/releases/15y/toagen/data/*/*/*.ff")
         )
@@ -373,7 +373,7 @@ class TimingConfiguration:
         """Check for frontend/backend pairs that arise at or below threshold
         for number of files; also check that the set matches with those listed
         in the yaml.
-        
+
         Parameters
         ==========
         toas: `pint.TOAs object`
@@ -427,8 +427,7 @@ class TimingConfiguration:
         return None
 
     def check_outlier(self):
-        """Perform simple checks on yaml outlier block and prob-outlier field
-        """
+        """Perform simple checks on yaml outlier block and prob-outlier field"""
         REQUIRED_KEYS = ["method", "n-burn", "n-samples"]
         try:
             EXISTING_KEYS = self.config["outlier"].keys()
@@ -565,55 +564,55 @@ class TimingConfiguration:
         return None  # return some default value instead?
 
     def get_noise_dir(self):
-        """ Return base directory for noise results """
+        """Return base directory for noise results"""
         if "results-dir" in self.config["noise"].keys():
             return self.config["noise"]["results-dir"]
         return None
 
     def get_ignore_dmx(self):
-        """ Return ignore-dmx toggle """
+        """Return ignore-dmx toggle"""
         if "ignore-dmx" in self.config["dmx"].keys():
             return self.config["dmx"]["ignore-dmx"]
         return None
 
     def get_fratio(self):
-        """ Return desired frequency ratio """
+        """Return desired frequency ratio"""
         if "fratio" in self.config["dmx"].keys():
             return self.config["dmx"]["fratio"]
         return FREQUENCY_RATIO
 
     def get_sw_delay(self):
-        """ Return desired max(solar wind delay) threshold """
+        """Return desired max(solar wind delay) threshold"""
         if "max-sw-delay" in self.config["dmx"].keys():
             return self.config["dmx"]["max-sw-delay"]
         return MAX_SOLARWIND_DELAY
 
     def get_custom_dmx(self):
-        """ Return MJD/binning params for handling DM events, etc. """
+        """Return MJD/binning params for handling DM events, etc."""
         if "custom-dmx" in self.config["dmx"].keys():
             return self.config["dmx"]["custom-dmx"]
         return None
 
     def get_outlier_burn(self):
-        """ Return outlier analysis burn-in samples """
+        """Return outlier analysis burn-in samples"""
         if "n-burn" in self.config["outlier"].keys():
             return self.config["outlier"]["n-burn"]
         return None
 
     def get_outlier_samples(self):
-        """ Return number of samples for outlier analysis """
+        """Return number of samples for outlier analysis"""
         if "n-samples" in self.config["outlier"].keys():
             return self.config["outlier"]["n-samples"]
         return None
 
     def get_outlier_method(self):
-        """ Return outlier analysis method """
+        """Return outlier analysis method"""
         if "method" in self.config["outlier"].keys():
             return self.config["outlier"]["method"]
         return None
 
     def apply_ignore(self, toas, specify_keys=None, warn=False):
-        """ Basic checks and return TOA excision info. """
+        """Basic checks and return TOA excision info."""
         OPTIONAL_KEYS = [
             "mjd-start",
             "mjd-end",
@@ -805,9 +804,9 @@ class TimingConfiguration:
 
 def freqs_overlap(toa1, toa2):
     """Returns true if TOAs from different backends overlap
-    
+
     See check_simultaneous in TimingConfiguration
-    
+
     Parameters:
     ===========
     toa1 [pint.TOA.table]: PINT TOA.table element

@@ -210,7 +210,7 @@ def tm_delay(t2pulsar, tm_params_orig, **kwargs):
             if tm_param == "COSI":
                 # Switch for sampling in COSI, but using SINI in libstempo
                 tm_params_rescaled["SINI"] = np.longdouble(
-                    np.sqrt(1 - tm_scaled_val ** 2)
+                    np.sqrt(1 - tm_scaled_val**2)
                 )
             else:
                 tm_params_rescaled[tm_param] = np.longdouble(tm_scaled_val)
@@ -222,7 +222,7 @@ def tm_delay(t2pulsar, tm_params_orig, **kwargs):
                     + tm_params_orig[tm_param][0]
                 )
                 tm_params_rescaled["SINI"] = np.longdouble(
-                    np.sqrt(1 - rescaled_COSI ** 2)
+                    np.sqrt(1 - rescaled_COSI**2)
                 )
             else:
                 tm_params_rescaled[tm_param] = np.longdouble(
@@ -347,9 +347,9 @@ def timing_block(
             elif "COSI" in par and "SINI" in psr.tm_params_orig.keys():
                 print("COSI added to tm_params_orig for to work with tm_delay.")
                 sin_val, sin_err, _ = psr.tm_params_orig["SINI"]
-                val = np.longdouble(np.sqrt(1 - sin_val ** 2))
+                val = np.longdouble(np.sqrt(1 - sin_val**2))
                 err = np.longdouble(
-                    np.sqrt((sin_err * sin_val) ** 2 / (1 - sin_val ** 2))
+                    np.sqrt((sin_err * sin_val) ** 2 / (1 - sin_val**2))
                 )
                 # psr.tm_params_orig["SINI"][-1] = "physical"
                 psr.tm_params_orig[par] = [val, err, "physical"]
@@ -400,9 +400,9 @@ def timing_block(
                     if "COSI" in par and "SINI" in psr.tm_params_orig.keys():
                         print("COSI added to tm_params_orig for to work with tm_delay.")
                         sin_val, sin_err, _ = psr.tm_params_orig["SINI"]
-                        val = np.longdouble(np.sqrt(1 - sin_val ** 2))
+                        val = np.longdouble(np.sqrt(1 - sin_val**2))
                         err = np.longdouble(
-                            np.sqrt((sin_err * sin_val) ** 2 / (1 - sin_val ** 2))
+                            np.sqrt((sin_err * sin_val) ** 2 / (1 - sin_val**2))
                         )
                         psr.tm_params_orig[par] = [val, err, "normalized"]
                     else:
@@ -449,7 +449,11 @@ def timing_block(
                             prior_lower_bound = np.float(val + err * prior_lower_bound)
 
         tm_delay_kwargs[par] = get_prior(
-            prior_type, prior_sigma, prior_lower_bound, prior_upper_bound, mu=prior_mu,
+            prior_type,
+            prior_sigma,
+            prior_lower_bound,
+            prior_upper_bound,
+            mu=prior_mu,
         )
     # timing model
     tm_func = tm_delay(**tm_delay_kwargs)
@@ -462,7 +466,8 @@ def timing_block(
         filter_Mmat(psr, ltm_list=ltm_list)
         if any(["DMX" in x for x in ltm_list]) and wideband_kwargs:
             ltm = gp_signals.WidebandTimingModel(
-                name="wideband_timing_model", **wideband_kwargs,
+                name="wideband_timing_model",
+                **wideband_kwargs,
             )
         else:
             ltm = gp_signals.TimingModel(coefficients=False)

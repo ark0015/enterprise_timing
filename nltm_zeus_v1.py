@@ -131,7 +131,10 @@ parser.add_argument(
     "--num_cores", default=int(1), help="Number of cores to run on (DEFAULT: 1)"
 )
 add_bool_arg(
-    parser, "pal2_priors", "Whether to use PAL2 WN priors (DEFAULT: False)", False,
+    parser,
+    "pal2_priors",
+    "Whether to use PAL2 WN priors (DEFAULT: False)",
+    False,
 )
 
 args = parser.parse_args()

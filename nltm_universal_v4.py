@@ -15,9 +15,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-top_path_idx = splt_path.index("nanograv")
+# top_path_idx = splt_path.index("nanograv")
 # top_path_idx = splt_path.index("akaiser")
-# top_path_idx = splt_path.index("ark0015")
+top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -136,7 +136,16 @@ add_bool_arg(
     True,
 )
 add_bool_arg(
-    parser, "pal2_priors", "Whether to use PAL2 WN priors (DEFAULT: False)", False,
+    parser,
+    "pal2_priors",
+    "Whether to use PAL2 WN priors (DEFAULT: False)",
+    False,
+)
+add_bool_arg(
+    parser,
+    "tnequad",
+    "Whether to use old tempo2 version of equad (DEFAULT: False)",
+    False,
 )
 parser.add_argument(
     "--parfile", default="", help="Location of parfile </PATH/TO/FILE/PARFILE.par>"
@@ -145,7 +154,9 @@ parser.add_argument(
     "--timfile", default="", help="Location of timfile </PATH/TO/FILE/TIMFILE.tim>"
 )
 parser.add_argument(
-    "--timing_package", default="tempo2", help="Whether to use PINT or Tempo2 (DEFAULT: tempo2)"
+    "--timing_package",
+    default="tempo2",
+    help="Whether to use PINT or Tempo2 (DEFAULT: tempo2)",
 )
 
 args = parser.parse_args()
@@ -218,7 +229,10 @@ elif args.datarelease == "15yr":
         )
         # timfile = top_dir + "/{}/{}/J0709+0458.L-wide.PUPPI.15y.x.nb.tim".format(args.datarelease, args.psr_name)
     else:
-        parfile = top_dir + f"/{args.datarelease}_v1/stripped_tempo2_parfiles/{args.psr_name}.par"
+        parfile = (
+            top_dir
+            + f"/{args.datarelease}_v1/stripped_tempo2_parfiles/{args.psr_name}.par"
+        )
         timfile = top_dir + f"/{args.datarelease}_v1/v1_t2_timfiles/{args.psr_name}.tim"
     print("Using {} data".format(args.datarelease))
 elif args.datarelease == "15yr_v1":
@@ -315,17 +329,35 @@ if not args.white_var:
         if "T2EFAC" in splt_line[0]:
             noisedict[f"{args.psr_name}_{splt_line[2]}_efac"] = np.float64(splt_line[3])
         if "T2EQUAD" in splt_line[0]:
-            noisedict[f"{args.psr_name}_{splt_line[2]}_log10_equad"] = np.log10(np.float64(splt_line[3]))
+            noisedict[f"{args.psr_name}_{splt_line[2]}_log10_equad"] = np.log10(
+                np.float64(splt_line[3])
+            )
         if "ECORR" in splt_line[0]:
-            noisedict[f"{args.psr_name}_{splt_line[2]}_log10_ecorr"] = np.log10(np.float64(splt_line[3]))
+            noisedict[f"{args.psr_name}_{splt_line[2]}_log10_ecorr"] = np.log10(
+                np.float64(splt_line[3])
+            )
 
 # filter
 is_psr = False
 if args.psr_name in parfile:
-    if args.timing_package.lower() == 'tempo2':
-        psr = Pulsar(parfile, timfile, ephem=args.ephem, clk=None, drop_t2pulsar=False,timing_package='tempo2')
-    elif args.timing_package.lower() == 'pint':
-        psr = Pulsar(parfile, timfile, ephem=args.ephem, clk=None, drop_pintpsr=False,timing_package='pint')
+    if args.timing_package.lower() == "tempo2":
+        psr = Pulsar(
+            parfile,
+            timfile,
+            ephem=args.ephem,
+            clk=None,
+            drop_t2pulsar=False,
+            timing_package="tempo2",
+        )
+    elif args.timing_package.lower() == "pint":
+        psr = Pulsar(
+            parfile,
+            timfile,
+            ephem=args.ephem,
+            clk=None,
+            drop_pintpsr=False,
+            timing_package="pint",
+        )
     is_psr = True
 
 if not is_psr:
@@ -383,9 +415,9 @@ for par in psr.fitpars:
         sini_mu = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index("SINI")])
         sini_err = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index("SINI")])
         if args.sample_cos:
-            cosi_mu = np.sqrt(1 - sini_mu ** 2)
+            cosi_mu = np.sqrt(1 - sini_mu**2)
             cosi_err = np.double(
-                np.sqrt((sini_err * sini_mu) ** 2 / (1 - sini_mu ** 2))
+                np.sqrt((sini_err * sini_mu) ** 2 / (1 - sini_mu**2))
             )
             tm_param_dict["COSI"] = {
                 "prior_mu": cosi_mu,
@@ -480,16 +512,22 @@ if args.tm_var and not args.tm_linear:
             ecorr = parameter.Uniform(-8.5, -4.0)
 
             # white noise signals
-            ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
-            eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
+            efeq = white_signals.MeasurementNoise(
+                efac=efac, selection=backend, name=None
+            )
+            efeq += white_signals.TNEquadNoise(
+                log10_tnequad=equad, selection=backend, name=None
+            )
 
             if args.Ecorr_gp_basis:
                 ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch)
             else:
-                ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
+                ec = white_signals.EcorrKernelNoise(
+                    log10_ecorr=ecorr, selection=backend_ch
+                )
 
             # combine signals
-            s += ef + eq + ec
+            s += efeq + ec
         model = s(psr)
 
         # set up PTA
@@ -568,6 +606,21 @@ else:
         # white noise signals
         ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
         eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
+        # white noise signals
+        if args.tnequad:
+            efeq = white_signals.MeasurementNoise(
+                efac=efac, selection=backend, name=None
+            )
+            efeq += white_signals.TNEquadNoise(
+                log10_tnequad=equad, selection=backend, name=None
+            )
+        else:
+            efeq = white_signals.MeasurementNoise(
+                efac=efac,
+                log10_t2equad=equad,
+                selection=backend,
+                name=None,
+            )
 
         if args.Ecorr_gp_basis:
             ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch)
@@ -576,9 +629,9 @@ else:
 
         # combine signals
         if args.incTimingModel:
-            s += ef + eq + ec
+            s += efeq + ec
         else:
-            s = ef + eq + ec
+            s = efeq + ec
 
     model = s(psr)
 

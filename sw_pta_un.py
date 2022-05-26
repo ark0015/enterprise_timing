@@ -237,7 +237,7 @@ if args.sw_pta_gp:
         n_Earth = np.einsum("ij,j", F, n_earth_rho)  # np.repeat(10**n_earth_rho,2))
         theta, R_earth, _, _ = SW.theta_impact(planetssb, sunssb, pos_t)
         dm_sol_wind = SW.dm_solar(1.0, theta, R_earth)
-        dt_sw = n_Earth * dm_sol_wind * 4.148808e3 / freqs ** 2
+        dt_sw = n_Earth * dm_sol_wind * 4.148808e3 / freqs**2
 
         return dt_sw
 
@@ -322,7 +322,11 @@ def transform(quantile):
 
 
 sampler1 = ultranest.ReactiveNestedSampler(
-    pta.param_names, pta.get_lnlikelihood, transform, log_dir=args.outdir, resume=True,
+    pta.param_names,
+    pta.get_lnlikelihood,
+    transform,
+    log_dir=args.outdir,
+    resume=True,
 )
 ndim = len(pta.params)
 sampler1.stepsampler = ultranest.stepsampler.RegionSliceSampler(nsteps=2 * ndim)
