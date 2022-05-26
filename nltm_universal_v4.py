@@ -144,6 +144,9 @@ parser.add_argument(
 parser.add_argument(
     "--timfile", default="", help="Location of timfile </PATH/TO/FILE/TIMFILE.tim>"
 )
+parser.add_argument(
+    "--timing_package", default="tempo2", help="Whether to use PINT or Tempo2 (DEFAULT: tempo2)"
+)
 
 args = parser.parse_args()
 
@@ -274,7 +277,7 @@ else:
     if not args.resume:
         print("nothing!")
         # raise ValueError("{} already exists!".format(outdir))
-"""
+
 noisedict = {}
 if args.datarelease in ["12p5yr", "cfr+19"]:
     noisefiles = sorted(glob.glob(top_dir + "/12p5yr/*.json"))
@@ -302,7 +305,7 @@ elif args.datarelease in ["5yr", "9yr", "11yr"]:
                     noisedict[og_key] = tmpnoisedict[og_key]
 else:
     noisedict = None
-"""
+
 if not args.white_var:
     with open(parfile, "r") as f:
         lines = f.readlines()
@@ -319,7 +322,10 @@ if not args.white_var:
 # filter
 is_psr = False
 if args.psr_name in parfile:
-    psr = Pulsar(parfile, timfile, ephem=args.ephem, clk=None, drop_t2pulsar=False)
+    if args.timing_package.lower() == 'tempo2':
+        psr = Pulsar(parfile, timfile, ephem=args.ephem, clk=None, drop_t2pulsar=False,timing_package='tempo2')
+    elif args.timing_package.lower() == 'pint':
+        psr = Pulsar(parfile, timfile, ephem=args.ephem, clk=None, drop_pintpsr=False,timing_package='pint')
     is_psr = True
 
 if not is_psr:
@@ -360,12 +366,12 @@ for par in psr.fitpars:
         par_val = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
         par_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
         if np.log10(par_sigma) > -10.0:
-            print("USING PHYSICAL PBDOT. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
+            print(f"USING PHYSICAL {par}. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
             lower = par_val - 50 * par_sigma * 1e-12
             upper = par_val + 50 * par_sigma * 1e-12
             # lower = pbdot - 5 * pbdot_sigma * 1e-12
             # upper = pbdot + 5 * pbdot_sigma * 1e-12
-            tm_param_dict["PBDOT"] = {
+            tm_param_dict[par] = {
                 "prior_mu": par_val,
                 "prior_sigma": par_sigma * 1e-12,
                 "prior_lower_bound": lower,

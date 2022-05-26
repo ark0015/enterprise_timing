@@ -31,7 +31,7 @@ from enterprise_extensions.timing import timing_block
 from enterprise_extensions.blocks import channelized_backends
 
 
-def pta_setup(psr, coefficients=False):
+def pta_setup(psr, tnequad=False, coefficients=False):
     # create new attribute for enterprise pulsar object
     # UNSURE IF NECESSARY
     psr.tm_params_orig = OrderedDict.fromkeys(psr.t2pulsar.pars())
@@ -51,14 +51,21 @@ def pta_setup(psr, coefficients=False):
     ecorr = parameter.Uniform(-8.5, -5.0)
 
     # white noise signals
-    ef = white_signals.MeasurementNoise(efac=efac, selection=backend, name=None)
-    eq = white_signals.EquadNoise(log10_equad=equad, selection=backend, name=None)
+    # white noise signals
+    if tnequad:
+        efeq = white_signals.MeasurementNoise(efac=efac,
+                                              selection=backend, name=None)
+        efeq += white_signals.TNEquadNoise(log10_tnequad=equad,
+                                           selection=backend, name=None)
+    else:
+        efeq = white_signals.MeasurementNoise(efac=efac, log10_t2equad=equad,
+                                              selection=backend, name=None)
 
     # ec = gp_signals.EcorrBasisModel(log10_ecorr=ecorr, selection=backend_ch,coefficients=coefficients)
     ec = white_signals.EcorrKernelNoise(log10_ecorr=ecorr, selection=backend_ch)
 
     # combine signals
-    s += ef + eq + ec
+    s += efeq + ec
 
     model = s(psr)
 
