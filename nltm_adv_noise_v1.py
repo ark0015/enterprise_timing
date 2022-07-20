@@ -17,9 +17,9 @@ from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
 splt_path = current_path.split("/")
-# top_path_idx = splt_path.index("nanograv")
+top_path_idx = splt_path.index("nanograv")
 # top_path_idx = splt_path.index("akaiser")
-top_path_idx = splt_path.index("ark0015")
+# top_path_idx = splt_path.index("ark0015")
 top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
@@ -144,11 +144,23 @@ add_bool_arg(
     "Whether to start the timing parameters at the parfile value. (DEFAULT: TRUE",
     True,
 )
-parser.add_argument(
-    "--parfile", default="", help="Location of parfile </PATH/TO/FILE/PARFILE.par>"
+add_bool_arg(
+    parser,
+    "tnequad",
+    "Whether to use old tempo2 version of equad (DEFAULT: False)",
+    False,
 )
 parser.add_argument(
-    "--timfile", default="", help="Location of timfile </PATH/TO/FILE/TIMFILE.tim>"
+    "--parfile",
+    default="",
+    help="Location of parfile </PATH/TO/FILE/PARFILE.par>",
+    required=True,
+)
+parser.add_argument(
+    "--timfile",
+    default="",
+    help="Location of timfile </PATH/TO/FILE/TIMFILE.tim>",
+    required=True,
 )
 parser.add_argument(
     "--model_kwargs_file", default="", help="Location of model_kwargs_file"
@@ -159,6 +171,11 @@ parser.add_argument(
 parser.add_argument(
     "--dmx_file", help="Location of dmx file to fit DM1/DM2", required=True
 )
+parser.add_argument(
+    "--timing_package",
+    default="tempo2",
+    help="Whether to use PINT or Tempo2 (DEFAULT: tempo2)",
+)
 
 args = parser.parse_args()
 
@@ -167,42 +184,7 @@ if not isinstance(args.N, int):
 else:
     N = args.N
 
-if args.datarelease == "all" and args.psr_name == "J0740+6620":
-    timfile = top_dir + "/12p5yr/J0740+6620/J0740+6620.prenoise.all.nchan64.tim"
-    print("Using All Data (CHIME+12.5yr+Cromartie et al. 2019)")
-elif args.datarelease == "fcp+21" and args.psr_name == "J0740+6620":
-    timfile = top_dir + "/12p5yr/J0740+6620/J0740+6620.FCP+21.nb.tim"
-    print("Using Data From Fonseca+21")
-elif args.datarelease == "cfr+19" and args.psr_name == "J0740+6620":
-    timfile = top_dir + "/12p5yr/J0740+6620/J0740+6620.cfr+19.tim"
-    print("Using Cromartie et al. 2019 data")
-elif args.datarelease == "12p5yr":
-    if args.wideband:
-        timfile = top_dir + "/{}/wideband/tim/{}_NANOGrav_12yv3.wb.tim".format(
-            args.datarelease, args.psr_name
-        )
-        print("Using {} Wideband data".format(args.datarelease))
-    else:
-        timfile = top_dir + "/{}/narrowband/tim/{}_NANOGrav_12yv3.tim".format(
-            args.datarelease, args.psr_name
-        )
-        print("Using {} Narrowband data".format(args.datarelease))
-elif args.datarelease == "prelim15yr":
-    timfile = top_dir + "/{}/{}.working.tim".format(args.datarelease, args.psr_name)
-    print("Using {} data".format(args.datarelease))
-elif args.datarelease == "15yr" and args.psr_name == "J0709+0458":
-    timfile = top_dir + "/{}/{}/J0709+0458.combined.nb.tim".format(
-        args.datarelease, args.psr_name
-    )
-    # timfile = top_dir + "/{}/{}/J0709+0458.L-wide.PUPPI.15y.x.nb.tim".format(args.datarelease, args.psr_name)
-    print("Using {} data".format(args.datarelease))
-else:
-    datadir = top_dir + "/{}".format(args.datarelease)
-    timfiles = sorted(glob.glob(datadir + "/tim/*.tim"))
-    timfile = [tfile for tfile in timfiles if args.psr_name in tfile][0]
-    print("Using {} data".format(args.datarelease))
-
-if len(args.parfile):
+if os.path.isfile(args.parfile):
     parfile = args.parfile
     # Load raw parfile to get DMEPOCH
     DMEPOCH = 0
@@ -214,13 +196,14 @@ if len(args.parfile):
         raise ValueError(
             "DMEPOCH not in parfile. Please add it to the parfile so DM1/DM2 fitting can work."
         )
-if not os.path.isfile(parfile):
-    raise ValueError(f"{parfile} does not exist. Please pick a real parfile.")
+else:
+    raise ValueError(f"{args.parfile} does not exist. Please pick a real parfile.")
 
-if len(args.timfile):
+
+if os.path.isfile(args.timfile):
     timfile = args.timfile
-if not os.path.isfile(timfile):
-    raise ValueError(f"{timfile} does not exist. Please pick a real timfile.")
+else:
+    raise ValueError(f"{args.timfile} does not exist. Please pick a real timfile.")
 
 if os.path.isfile(args.dmx_file):
     # Load DMX values
@@ -289,7 +272,24 @@ noisedict = None
 # filter
 is_psr = False
 if args.psr_name in parfile:
-    psr = Pulsar(parfile, timfile, ephem=args.ephem, clk=None, drop_t2pulsar=False)
+    if args.timing_package.lower() == "tempo2":
+        psr = Pulsar(
+            parfile,
+            timfile,
+            ephem=args.ephem,
+            clk=None,
+            drop_t2pulsar=False,
+            timing_package="tempo2",
+        )
+    elif args.timing_package.lower() == "pint":
+        psr = Pulsar(
+            parfile,
+            timfile,
+            ephem=args.ephem,
+            clk=None,
+            drop_pintpsr=False,
+            timing_package="pint",
+        )
     is_psr = True
 
 if not is_psr:
@@ -330,16 +330,16 @@ for par in psr.fitpars:
     else:
         nltm_params.append(par)
 
-    if par in ["PBDOT", "XDOT"]:
+    if par in ["PBDOT", "XDOT"] and hasattr(psr, "t2pulsar"):
         par_val = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
         par_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
         if np.log10(par_sigma) > -10.0:
-            print("USING PHYSICAL PBDOT. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
+            print(f"USING PHYSICAL {par}. Val: ", par_val, "Err: ", par_sigma * 1e-12)
             lower = par_val - 50 * par_sigma * 1e-12
             upper = par_val + 50 * par_sigma * 1e-12
             # lower = pbdot - 5 * pbdot_sigma * 1e-12
             # upper = pbdot + 5 * pbdot_sigma * 1e-12
-            tm_param_dict["PBDOT"] = {
+            tm_param_dict[par] = {
                 "prior_mu": par_val,
                 "prior_sigma": par_sigma * 1e-12,
                 "prior_lower_bound": lower,
@@ -352,8 +352,8 @@ for par in psr.fitpars:
         for ii, parr in enumerate(["DM1", "DM2"]):
             refit_pars.append(parr)
             print(f"USING REFIT {parr}. Val:  {popt[ii]}, Err: {perr[ii]}")
-            lower = popt[ii] - 50 * perr[ii]
-            upper = popt[ii] + 50 * perr[ii]
+            lower = popt[ii] - 1e4 * perr[ii]
+            upper = popt[ii] + 1e4 * perr[ii]
             tm_param_dict[f"{parr}"] = {
                 "prior_mu": popt[ii],
                 "prior_sigma": perr[ii],

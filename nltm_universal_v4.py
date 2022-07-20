@@ -2,15 +2,6 @@ import numpy as np
 import glob, os, sys, pickle, json, inspect
 from collections import OrderedDict
 
-import enterprise
-from enterprise.pulsar import Pulsar
-from enterprise.signals import utils
-from enterprise.signals import parameter
-from enterprise.signals import white_signals
-from enterprise.signals import signal_base
-from enterprise.signals import selections
-from enterprise.signals import gp_signals
-
 from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 current_path = os.getcwd()
@@ -22,8 +13,22 @@ top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
 noise_path = top_dir + "/pta_sim/pta_sim"
+# e_path = top_dir + "/enterprise/"
+
 sys.path.insert(0, noise_path)
 sys.path.insert(0, e_e_path)
+# sys.path.insert(0, e_path)
+
+import enterprise
+from enterprise.pulsar import Pulsar
+from enterprise.signals import utils
+from enterprise.signals import parameter
+from enterprise.signals import white_signals
+from enterprise.signals import signal_base
+from enterprise.signals import selections
+from enterprise.signals import gp_signals
+
+
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
 from enterprise_extensions import models
@@ -394,11 +399,11 @@ for par in psr.fitpars:
     else:
         nltm_params.append(par)
 
-    if par in ["PBDOT", "XDOT"]:
+    if par in ["PBDOT", "XDOT"] and hasattr(psr, "t2pulsar"):
         par_val = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
         par_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
         if np.log10(par_sigma) > -10.0:
-            print(f"USING PHYSICAL {par}. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
+            print(f"USING PHYSICAL {par}. Val: ", par_val, "Err: ", par_sigma * 1e-12)
             lower = par_val - 50 * par_sigma * 1e-12
             upper = par_val + 50 * par_sigma * 1e-12
             # lower = pbdot - 5 * pbdot_sigma * 1e-12
@@ -412,8 +417,13 @@ for par in psr.fitpars:
 
     elif par == "SINI" and args.datarelease == "5yr" and args.psr_name == "J1640+2224":
         # Use the priors from Vigeland and Vallisneri 2014
-        sini_mu = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index("SINI")])
-        sini_err = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index("SINI")])
+        if hasattr(psr, "t2pulsar"):
+            sini_mu = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index("SINI")])
+            sini_err = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index("SINI")])
+        elif hasattr(psr, "model"):
+            sini_mu = np.double(getattr(psr.model, par).value)
+            sini_err = np.double(getattr(psr.model, par).uncertainty_value)
+            print(sini_mu, sini_err)
         if args.sample_cos:
             cosi_mu = np.sqrt(1 - sini_mu**2)
             cosi_err = np.double(
@@ -434,23 +444,43 @@ for par in psr.fitpars:
             }
     elif par == "PX" and args.datarelease == "5yr" and args.psr_name == "J1640+2224":
         # Use the priors from Vigeland and Vallisneri 2014
-        tm_param_dict[par] = {
-            "prior_mu": np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]),
-            "prior_sigma": np.double(
-                psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
-            ),
-            "prior_type": "dm_dist_px_prior",
-        }
+        if hasattr(psr, "t2pulsar"):
+            tm_param_dict[par] = {
+                "prior_mu": np.double(
+                    psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]
+                ),
+                "prior_sigma": np.double(
+                    psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
+                ),
+                "prior_type": "dm_dist_px_prior",
+            }
+        elif hasattr(psr, "model"):
+            tm_param_dict[par] = {
+                "prior_mu": np.double(getattr(psr.model, par).value),
+                "prior_sigma": np.double(getattr(psr.model, par).uncertainty_value),
+                "prior_type": "dm_dist_px_prior",
+            }
+
     elif par == "M2" and args.datarelease == "5yr" and args.psr_name == "J1640+2224":
         # Use the priors from Vigeland and Vallisneri 2014
-        tm_param_dict[par] = {
-            "prior_mu": np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]),
-            "prior_sigma": np.double(
-                psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
-            ),
-            "prior_lower_bound": 0.0,
-            "prior_upper_bound": 10.0,
-        }
+        if hasattr(psr, "t2pulsar"):
+            tm_param_dict[par] = {
+                "prior_mu": np.double(
+                    psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]
+                ),
+                "prior_sigma": np.double(
+                    psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
+                ),
+                "prior_lower_bound": 0.0,
+                "prior_upper_bound": 10.0,
+            }
+        elif hasattr(psr, "model"):
+            tm_param_dict[par] = {
+                "prior_mu": np.double(getattr(psr.model, par).value),
+                "prior_sigma": np.double(getattr(psr.model, par).uncertainty_value),
+                "prior_lower_bound": 0.0,
+                "prior_upper_bound": 10.0,
+            }
 
 if not args.tm_linear and args.tm_var:
     print(

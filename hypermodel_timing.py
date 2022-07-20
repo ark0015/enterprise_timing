@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 import enterprise_extensions as e_e
@@ -6,7 +7,9 @@ from enterprise_extensions.sampler import (
     get_parameter_groups,
     get_timing_groups,
     group_from_params,
+    save_runtime_info,
 )
+
 from enterprise_extensions.hypermodel import HyperModel
 from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
@@ -117,6 +120,9 @@ class TimingHyperModel(HyperModel):
         empirical_distr=None,
         groups=None,
         timing=True,
+        human=None,
+        loglkwargs={},
+        logpkwargs={},
     ):
         """
         Sets up an instance of PTMCMC sampler.
@@ -141,7 +147,13 @@ class TimingHyperModel(HyperModel):
         ndim = len(self.param_names)
 
         # initial jump covariance matrix
-        cov = np.diag(np.ones(ndim) * 1**2)  ## used to be 0.1
+        if os.path.exists(outdir + "/cov.npy"):
+            try:
+                cov = np.load(outdir + "/cov.npy")
+            except (ValueError):
+                cov = np.diag(np.ones(ndim) * 0.1**2)
+        else:
+            cov = np.diag(np.ones(ndim) * 1.0**2)  # used to be 0.1
 
         # parameter groupings
         if groups is None:
@@ -155,9 +167,11 @@ class TimingHyperModel(HyperModel):
             groups=groups,
             outDir=outdir,
             resume=resume,
+            loglkwargs=loglkwargs,
+            logpkwargs=logpkwargs,
         )
-        np.savetxt(outdir + "/pars.txt", self.param_names, fmt="%s")
-        np.savetxt(outdir + "/priors.txt", self.params, fmt="%s")
+
+        save_runtime_info(self, sampler.outDir, human)
 
         # additional jump proposals
         jp = JumpProposal(
@@ -202,10 +216,30 @@ class TimingHyperModel(HyperModel):
             print("Adding DMX prior draws...\n")
             sampler.addProposalToCycle(jp.draw_from_dmx_prior, 10)
 
+        # Chromatic GP noise prior draw
+        if "chrom_gp" in self.snames:
+            print("Adding Chromatic GP noise prior draws...\n")
+            sampler.addProposalToCycle(jp.draw_from_chrom_gp_prior, 10)
+
         # SW prior draw
         if "gp_sw" in jp.snames:
             print("Adding Solar Wind DM GP prior draws...\n")
             sampler.addProposalToCycle(jp.draw_from_dm_sw_prior, 10)
+
+        # Chromatic GP noise prior draw
+        if "chrom_gp" in self.snames:
+            print("Adding Chromatic GP noise prior draws...\n")
+            sampler.addProposalToCycle(jp.draw_from_chrom_gp_prior, 10)
+
+        # SW prior draw
+        if "gp_sw" in jp.snames:
+            print("Adding Solar Wind DM GP prior draws...\n")
+            sampler.addProposalToCycle(jp.draw_from_dm_sw_prior, 10)
+
+        # Chromatic GP noise prior draw
+        if "chrom_gp" in self.snames:
+            print("Adding Chromatic GP noise prior draws...\n")
+            sampler.addProposalToCycle(jp.draw_from_chrom_gp_prior, 10)
 
         # Ephemeris prior draw
         if "d_jupiter_mass" in self.param_names:
@@ -213,7 +247,7 @@ class TimingHyperModel(HyperModel):
             sampler.addProposalToCycle(jp.draw_from_ephem_prior, 10)
 
         # GWB uniform distribution draw
-        if "gw_log10_A" in self.param_names:
+        if np.any([("gw" in par and "log10_A" in par) for par in self.param_names]):
             print("Adding GWB uniform distribution draws...\n")
             sampler.addProposalToCycle(jp.draw_from_gwb_log_uniform_distribution, 10)
 
@@ -233,6 +267,11 @@ class TimingHyperModel(HyperModel):
         if "bwm_log10_A" in self.param_names:
             print("Adding BWM prior draws...\n")
             sampler.addProposalToCycle(jp.draw_from_bwm_prior, 10)
+
+        # FDM prior draw
+        if "fdm_log10_A" in self.param_names:
+            print("Adding FDM prior draws...\n")
+            sampler.addProposalToCycle(jp.draw_from_fdm_prior, 10)
 
         # CW prior draw
         if "cw_log10_h" in self.param_names:
