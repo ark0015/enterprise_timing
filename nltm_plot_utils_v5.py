@@ -42,6 +42,9 @@ def get_pardict(psrs, datareleases):
 
 
 def make_dmx_file(parfile):
+    """Strips the parfile for the dmx values to be used in an Advanced Noise Modeling Run
+    :param parfile: the parameter file to be stripped
+    """
     dmx_dict = {}
     with open(parfile, "r") as f:
         lines = f.readlines()
@@ -111,6 +114,11 @@ def make_dmx_file(parfile):
 
 
 def get_map_param(core, params, to_burn=True):
+    """Separate version of getting the maximum a posteriori from a `la_forge` core
+    :param core: `la_forge` core object
+    :param params: the parameters for which to get the MAP values
+    :param to_burn: whether to shorten the chain to exclude early samples
+    """
     map_idx = np.argmax(core.get_param("lnpost", to_burn=True))
     """
     print(stats.mode(core.get_param('lnpost',to_burn=to_burn)))
@@ -161,8 +169,7 @@ def tm_delay(psr, tm_params_orig, new_params, plot=True):
     :param psr: enterprise pulsar object
     :param tm_params_orig: dictionary of TM parameter tuples, (val, err)
     :param new_params: dictionary of new TM parameter tuples, (val, err)
-
-    :return: difference between new and old residuals in seconds
+    :param plot: Whether to plot the delay or return the delay
     """
     if hasattr(psr, "model"):
         residuals = Residuals(psr.pint_toas, psr.model)
@@ -223,7 +230,7 @@ def tm_delay(psr, tm_params_orig, new_params, plot=True):
         # new_res = np.longdouble(Residuals(psr.pint_toas, new_model).resids_value)
         new_res = Residuals(psr.pint_toas, new_model)
         if plot:
-            plotres_pint(psr, new_res, residuals, tm_params_rescaled)
+            plotres_pint(psr, new_res, residuals)
     elif hasattr(psr, "t2pulsar"):
         # Set values to new sampled values
         psr.t2pulsar.vals(tm_params_rescaled)
@@ -232,7 +239,7 @@ def tm_delay(psr, tm_params_orig, new_params, plot=True):
         # Set values back to originals
         psr.t2pulsar.vals(orig_params)
         if plot:
-            plotres_t2(psr.t2pulsar, new_res, residuals, tm_params_rescaled)
+            plotres_t2(psr, new_res)
     else:
         raise ValueError(
             "Enterprise pulsar must keep either pint or t2pulsar. Use either drop_t2pulsar=False or drop_pintpsr=False when initializing the enterprise pulsar."
@@ -243,20 +250,28 @@ def tm_delay(psr, tm_params_orig, new_params, plot=True):
         return new_res[psr.isort], psr.residuals
 
 
-def plotres_pint(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs):
+def plotres_pint(psr, new_res, old_res, **kwargs):
+    """Used to compare different sets of residuals from a pint pulsar
+    :param psr: an `enterprise` pulsar with the `PINT` pulsar object retained
+    :param new_res: the new residuals, post-run
+    :param old_res: the old residuals, generally from the parfile parameters
+    """
+    kwargs.get("alpha", 0.5)
     plt.errorbar(
-        old_res.toas.get_mjds(),
-        old_res.resids.to(u.us),
-        yerr=old_res.toas.get_errors().to(u.us),
+        old_res.toas.get_mjds().value,
+        old_res.resids.to(u.us).value,
+        yerr=old_res.toas.get_errors().to(u.us).value,
         fmt="x",
         label="Old Residuals",
+        **kwargs,
     )
     plt.errorbar(
-        new_res.toas.get_mjds(),
-        new_res.resids.to(u.us),
-        yerr=new_res.toas.get_errors().to(u.us),
+        new_res.toas.get_mjds().value,
+        new_res.resids.to(u.us).value,
+        yerr=new_res.toas.get_errors().to(u.us).value,
         fmt="+",
         label="New Residuals",
+        **kwargs,
     )
     meannewres = np.sqrt(np.mean(new_res.resids.to(u.us) ** 2))
     meanoldres = np.sqrt(np.mean(old_res.resids.to(u.us) ** 2))
@@ -270,93 +285,112 @@ def plotres_pint(psr, new_res, old_res, par_dict, deleted=False, group=None, **k
     plt.grid()
 
 
-def plotres_t2(psr, new_res, old_res, par_dict, deleted=False, group=None, **kwargs):
-    """Plot residuals, compute unweighted rms residual."""
+def plotres_t2(psr, new_res, **kwargs):
+    """Used to compare different sets of residuals from a T2 pulsar
+    :param psr: an `enterprise` pulsar with the `TEMPO2` pulsar object retained
+    :param new_res: the new residuals, post-run
+    """
+    kwargs.get("alpha", 0.5)
+    plt.errorbar(
+        (psr.toas * u.s).to("d").value,
+        (psr.residuals * u.s).to("us").value,
+        yerr=(psr.toaerrs * u.s).to("us").value,
+        fmt="x",
+        label="Old Residuals",
+        **kwargs,
+    )
+    plt.errorbar(
+        (psr.toas * u.s).to("d").value,
+        (new_res[psr.isort] * u.s).to("us").value,
+        yerr=(psr.toaerrs * u.s).to("us").value,
+        fmt="+",
+        label="New Residuals",
+        **kwargs,
+    )
+    meannewres = np.sqrt(np.mean((new_res * u.s).to("us") ** 2))
+    meanoldres = np.sqrt(np.mean((psr.residuals * u.s).to("us") ** 2))
 
-    t, errs = psr.toas(), psr.toaerrs
-
-    meannewres = np.sqrt(np.mean(new_res**2)) / 1e-6
-    meanoldres = np.sqrt(np.mean(old_res**2)) / 1e-6
-
-    if (not deleted) and np.any(psr.deleted != 0):
-        new_res, old_res, t, errs = (
-            new_res[psr.deleted == 0],
-            old_res[psr.deleted == 0],
-            t[psr.deleted == 0],
-            errs[psr.deleted == 0],
-        )
-        print("Plotting {0}/{1} nondeleted points.".format(len(new_res), psr.nobs))
-    if group is None:
-        i = np.argsort(t)
-        pars = [x for x in par_dict.keys()]
-        vals = []
-        for p, v in zip(psr.pars(), psr.vals()):
-            for pa in pars:
-                if p == pa:
-                    vals.append(v)
-
-        plt.errorbar(
-            t[i],
-            old_res[i] / 1e-6,
-            yerr=errs[i],
-            fmt="x",
-            label="Old Residuals",
-            **kwargs,
-        )
-        plt.errorbar(
-            t[i],
-            new_res[i] / 1e-6,
-            yerr=errs[i],
-            fmt="+",
-            label="New Residuals",
-            **kwargs,
-        )
-        # plt.legend()
-    else:
-        if (not deleted) and np.any(psr.deleted):
-            flagmask = psr.flagvals(group)[~psr.deleted]
-        else:
-            flagmask = psr.flagvals(group)
-
-        unique = list(set(flagmask))
-
-        for flagval in unique:
-            f = flagmask == flagval
-            flagnewres, flagoldresflagt, flagerrs = (
-                new_res[f],
-                old_res[f],
-                t[f],
-                errs[f],
-            )
-            i = np.argsort(flagt)
-
-            plt.errorbar(
-                flagt[i],
-                flagoldres[i] / 1e-6,
-                yerr=flagerrs[i],
-                fmt="d",
-                label="Old Residuals",
-                **kwargs,
-            )
-            plt.errorbar(
-                flagt[i],
-                flagnewres[i] / 1e-6,
-                yerr=flagerrs[i],
-                fmt="x",
-                label="New Residuals",
-                **kwargs,
-            )
-
-        # plt.legend(unique,numpoints=1,bbox_to_anchor=(1.1,1.1))
     plt.legend()
     plt.xlabel(r"MJD")
     plt.ylabel(r"res [$\mu s$]")
     plt.title(
-        rf"{psr.name}: RMS, Old Res = {meanoldres:.3f} $\mu s$, New Res = {meannewres:.3f} $\mu s$"
+        rf"{psr.name}: RMS, Old Res = {meanoldres.value:.3f} $\mu s$, New Res = {meannewres.value:.3f} $\mu s$"
     )
+    plt.grid()
+
+
+def residual_comparison(
+    psr,
+    core,
+    use_mean_median_map="median",
+):
+    """Used to compare old residuals to new residuals.
+    :param psr: `enterprise` pulsar object with either `PINT` or `libstempo` pulsar retained
+    :param core: `la_forge` core object
+    :param use_mean_median_map: {"median","mean","map"} determines which values from posteriors to take
+        as values in the residual calculation
+    """
+    core_titles = get_titles(psr.name, core)
+    core_timing_dict_unscaled = OrderedDict()
+
+    if use_mean_median_map == "map":
+        map_idx_e_e = np.argmax(core.get_param("lnpost", to_burn=True))
+    elif use_mean_median_map not in ["map", "median", "mean"]:
+        raise ValueError(
+            "use_mean_median_map can only be either 'map','median', or 'mean"
+        )
+
+    for par in core.params:
+        unscaled_param = core.get_param(par, to_burn=True, tm_convert=True)
+        if use_mean_median_map == "map":
+            core_timing_dict_unscaled[par] = unscaled_param[map_idx_e_e]
+        elif use_mean_median_map == "mean":
+            core_timing_dict_unscaled[par] = np.mean(unscaled_param)
+        elif use_mean_median_map == "median":
+            core_timing_dict_unscaled[par] = np.median(unscaled_param)
+
+    core_timing_dict = deepcopy(core_timing_dict_unscaled)
+    """
+    if use_tm_pars_orig:
+        for p in core_timing_dict.keys():
+            if "timing" in p:
+                core_timing_dict.update(
+                    {p: np.double(core.tm_pars_orig[p.split("_")[-1]][0])}
+                )
+    """
+    chain_tm_params_orig = deepcopy(core.tm_pars_orig)
+    chain_tm_delay_kwargs = {}
+    for par in psr.fitpars:
+        if par == "SINI" and "COSI" in core.tm_pars_orig.keys():
+            sin_val, sin_err, _ = chain_tm_params_orig[par]
+            val = np.longdouble(np.sqrt(1 - sin_val**2))
+            err = np.longdouble(np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2))
+            chain_tm_params_orig["COSI"] = [val, err, "physical"]
+            chain_tm_delay_kwargs["COSI"] = core_timing_dict[
+                core.params[core_titles.index("COSI")]
+            ]
+        elif par in core.tm_pars_orig.keys():
+            if par in core_titles:
+                chain_tm_params_orig[par][-1] = "physical"
+                chain_tm_delay_kwargs[par] = core_timing_dict[
+                    core.params[core_titles.index(par)]
+                ]
+            else:
+                # print(f"{par} not directly sampled. Using parfile value.")
+                chain_tm_params_orig[par][-1] = "normalized"
+                chain_tm_delay_kwargs[par] = 0.0
+        else:
+            print(f"{par} not in psr pars")
+
+    tm_delay(psr, chain_tm_params_orig, chain_tm_delay_kwargs)
+    plt.show()
 
 
 def check_convergence(core_list):
+    """Checks chain convergence using Gelman-Rubin split R-hat statistic (Vehtari et al. 2019),
+        a geweke test, and the auto-correlation
+    :param core_list: list of `la_forge` core objects
+    """
     cut_off_idx = -3
     for core in core_list:
         lp = np.unique(np.max(core.get_param("lnpost")))
@@ -392,11 +426,16 @@ def check_convergence(core_list):
         print("")
 
 
-def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
+def summary_comparison(psr_name, core, selection="all"):
     """Makes comparison table of the form:
     Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma
-    TODO: allow for selection of subparameters"""
-    pd.set_option("max_rows", None)
+    :param psr_name: str, Name of the pulsar to be looked at
+    :param core: `la_forge` core object
+    :param selection: str, Used to select various groups of parameters:
+        see `get_param_groups` for details
+    """
+    # TODO: allow for selection of subparameters
+    pd.set_option("display.max_rows", None)
     plot_params = get_param_groups(core, selection=selection)
     summary_dict = {}
     for pnames, title in zip(plot_params["par"], plot_params["title"]):
@@ -408,10 +447,33 @@ def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
 
             summary_dict[title] = {}
             summary_dict[title]["new_val"] = np.median(param_vals)
-            summary_dict[title]["new_sigma"] = np.std(param_vals)
+            # summary_dict[title]["new_sigma"] = np.std(param_vals)
+            summary_dict[title]["new_sigma"] = np.max(
+                np.abs(
+                    core.get_param_credint(pnames, interval=68, onesided=False)
+                    - summary_dict[title]["new_val"]
+                )
+            )
+            summary_dict[title]["rounded_new_sigma"] = np.round(
+                summary_dict[title]["new_sigma"],
+                -int(np.floor(np.log10(np.abs(summary_dict[title]["new_sigma"])))),
+            )
+            summary_dict[title]["rounded_new_val"] = np.round(
+                summary_dict[title]["new_val"],
+                -int(np.floor(np.log10(np.abs(summary_dict[title]["new_sigma"])))),
+            )
+
             if title in core.tm_pars_orig:
                 summary_dict[title]["old_val"] = core.tm_pars_orig[title][0]
                 summary_dict[title]["old_sigma"] = core.tm_pars_orig[title][1]
+                summary_dict[title]["rounded_old_sigma"] = np.round(
+                    summary_dict[title]["old_sigma"],
+                    -int(np.floor(np.log10(np.abs(summary_dict[title]["old_sigma"])))),
+                )
+                summary_dict[title]["rounded_old_val"] = np.round(
+                    summary_dict[title]["old_val"],
+                    -int(np.floor(np.log10(np.abs(summary_dict[title]["old_sigma"])))),
+                )
                 summary_dict[title]["difference"] = (
                     summary_dict[title]["new_val"] - core.tm_pars_orig[title][0]
                 )
@@ -429,6 +491,8 @@ def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
                 summary_dict[title]["difference"] = "-"
                 summary_dict[title]["big"] = "-"
                 summary_dict[title]["constrained"] = "-"
+                summary_dict[title]["rounded_old_val"] = "-"
+                summary_dict[title]["rounded_old_sigma"] = "-"
     return pd.DataFrame(
         np.asarray(
             [
@@ -438,6 +502,10 @@ def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
                 [summary_dict[x]["difference"] for x in summary_dict.keys()],
                 [summary_dict[x]["old_sigma"] for x in summary_dict.keys()],
                 [summary_dict[x]["new_sigma"] for x in summary_dict.keys()],
+                [summary_dict[x]["rounded_old_val"] for x in summary_dict.keys()],
+                [summary_dict[x]["rounded_old_sigma"] for x in summary_dict.keys()],
+                [summary_dict[x]["rounded_new_val"] for x in summary_dict.keys()],
+                [summary_dict[x]["rounded_new_sigma"] for x in summary_dict.keys()],
                 [summary_dict[x]["big"] for x in summary_dict.keys()],
                 [summary_dict[x]["constrained"] for x in summary_dict.keys()],
             ]
@@ -448,71 +516,24 @@ def summary_comparison(psr_name, core, par_sigma={}, selection="all"):
             "New Median Value",
             "Difference",
             "Old Sigma",
-            "New Std Dev",
+            "New Sigma",
+            "Rounded Old Value",
+            "Rounded Old Sigma",
+            "Rounded New Value",
+            "Rounded New Sigma",
             ">1 sigma change?",
             "More Constrained?",
         ],
     )
 
 
-def residual_comparison(
-    psr, core, use_mean_median_map="median", use_tm_pars_orig=False
-):
-    """Used to compare old residuals to new residuals."""
-    core_titles = get_titles(psr.name, core)
-    core_timing_dict_unscaled = OrderedDict()
-
-    if use_mean_median_map == "map":
-        map_idx_e_e = np.argmax(core.get_param("lnpost", to_burn=True))
-    elif use_mean_median_map not in ["map", "median", "mean"]:
-        raise ValueError(
-            "use_mean_median_map can only be either 'map','median', or 'mean"
-        )
-
-    for par in core.params:
-        unscaled_param = core.get_param(par, to_burn=True, tm_convert=True)
-        if use_mean_median_map == "map":
-            core_timing_dict_unscaled[par] = unscaled_param[map_idx_e_e]
-        elif use_mean_median_map == "mean":
-            core_timing_dict_unscaled[par] = np.mean(unscaled_param)
-        elif use_mean_median_map == "median":
-            core_timing_dict_unscaled[par] = np.median(unscaled_param)
-
-    core_timing_dict = deepcopy(core_timing_dict_unscaled)
-    if use_tm_pars_orig:
-        for p in core_timing_dict.keys():
-            if "timing" in p:
-                core_timing_dict.update(
-                    {p: np.double(core.tm_pars_orig[p.split("_")[-1]][0])}
-                )
-
-    chain_tm_params_orig = deepcopy(core.tm_pars_orig)
-    chain_tm_delay_kwargs = {}
-    for par in psr.fitpars:
-        if par == "SINI" and "COSI" in core.tm_pars_orig.keys():
-            sin_val, sin_err, _ = chain_tm_params_orig[par]
-            val = np.longdouble(np.sqrt(1 - sin_val**2))
-            err = np.longdouble(np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2))
-            chain_tm_params_orig["COSI"] = [val, err, "physical"]
-            chain_tm_delay_kwargs["COSI"] = core_timing_dict[
-                core.params[core_titles.index("COSI")]
-            ]
-        elif par in core.tm_pars_orig.keys():
-            chain_tm_params_orig[par][-1] = "physical"
-            chain_tm_delay_kwargs[par] = core_timing_dict[
-                core.params[core_titles.index(par)]
-            ]
-        else:
-            print(f"{par} not in psr pars")
-
-    tm_delay(psr, chain_tm_params_orig, chain_tm_delay_kwargs)
-    plt.show()
-
-
 def refit_errs(psr, tm_params_orig):
-    # Check to see if nan or inf in pulsar parameter errors.
-    # The refit will populate the incorrect errors, but sometimes
-    # changes the values by too much, which is why it is done in this order.
+    """Checks to see if nan or inf in pulsar parameter errors.
+    :param psr: `enterprise` pulsar object with either `PINT` or `libstempo` pulsar retained
+    :param tm_params_orig: original timing model parameters (usually from parfile)
+    Notes: The refit will populate the incorrect errors, but sometimes
+        changes the values by too much, which is why it is done in this order.
+    """
     orig_vals = {p: v for p, v in zip(psr.t2pulsar.pars(), psr.t2pulsar.vals())}
     orig_errs = {p: e for p, e in zip(psr.t2pulsar.pars(), psr.t2pulsar.errs())}
     if np.any(np.isnan(psr.t2pulsar.errs())) or np.any(
@@ -531,6 +552,10 @@ def refit_errs(psr, tm_params_orig):
 
 
 def reorder_columns(e_e_chaindir, outdir):
+    """reorders chain columns
+    :param e_e_chaindir: path to chain to be reordered
+    :param outdir: path to output directory
+    """
     chain_e_e = pd.read_csv(
         e_e_chaindir + "/chain_1.0.txt", sep="\t", dtype=float, header=None
     )
@@ -539,6 +564,10 @@ def reorder_columns(e_e_chaindir, outdir):
 
 
 def get_new_PAL2_params(psr_name, core):
+    """Renames PAL2 parameters old naming scheme
+    :param psr_name: Name of the pulsar
+    :param core: `la_forge` core object
+    """
     new_PAL2_params = []
     for par in core.params:
         if "efac" in par:
@@ -555,7 +584,94 @@ def get_new_PAL2_params(psr_name, core):
     return new_PAL2_params
 
 
+def get_dmgp_timescales(psr_name, core, ci_int = 68.3):
+    plot_params = get_param_groups(core, selection="dm_chrom")
+    lower_q = (100 - ci_int) / 2
+    for dm_par in plot_params["par"]:
+        if "ell" in dm_par:
+            if isinstance(core, TimingCore):
+                plot_params["conv_med_val"].append(
+                    f"{np.median(10**core.get_param(dm_par,tm_convert=True))} days"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(10**core.get_param(dm_par,tm_convert=True),q=lower_q)} days, lower",
+                     f"{np.percentile(10**core.get_param(dm_par,tm_convert=True),q=100-lower_q)} days, higher"]
+                )
+            else:
+                plot_params["conv_med_val"].append(
+                    f"{np.median(10**core.get_param(dm_par))} days"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(10**core.get_param(dm_par),q=lower_q)} days, lower",
+                     f"{np.percentile(10**core.get_param(dm_par),q=100-lower_q)} days, higher"]
+                )
+        elif "log10_p" in dm_par:
+            if isinstance(core, TimingCore):
+                plot_params["conv_med_val"].append(
+                    f"{np.median(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400)} days"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400,q=lower_q)} days, lower",
+                     f"{np.percentile(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400,q=100-lower_q)} days, higher"]
+                )
+            else:
+                plot_params["conv_med_val"].append(
+                    f"{np.median(10**core.get_param(dm_par)*3.16e7/86400)} days"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(10**core.get_param(dm_par)*3.16e7/86400,q=lower_q)} days, lower",
+                     f"{np.percentile(10**core.get_param(dm_par)*3.16e7/86400,q=100-lower_q)} days, higher"]
+                )
+        elif "n_earth" in dm_par:
+            if isinstance(core, TimingCore):
+                plot_params["conv_med_val"].append(
+                    f"{np.median(core.get_param(dm_par,tm_convert=True))} SW electron density"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(core.get_param(dm_par,tm_convert=True),q=lower_q)} SW electron density, lower",
+                     f"{np.percentile(core.get_param(dm_par,tm_convert=True),q=100-lower_q)} SW electron density, higher"]
+                )
+            else:
+                plot_params["conv_med_val"].append(
+                    f"{np.median(core.get_param(dm_par))} SW electron density"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(core.get_param(dm_par),q=lower_q)} SW electron density, lower",
+                     f"{np.percentile(core.get_param(dm_par),q=100-lower_q)} SW electron density, higher"]
+                )
+        else:
+            if isinstance(core, TimingCore):
+                if "log10" in dm_par:
+                    new_val = 10**core.get_param(dm_par,tm_convert=True)
+                else:
+                    new_val = core.get_param(dm_par,tm_convert=True)
+                plot_params["conv_med_val"].append(
+                    f"{np.median(new_val)}"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(new_val,q=lower_q)} lower",
+                     f"{np.percentile(new_val,q=100-lower_q)} higher"]
+                )
+            else:
+                if "log10" in dm_par:
+                    new_val = 10**core.get_param(dm_par)
+                else:
+                    new_val = core.get_param(dm_par)
+                plot_params["conv_med_val"].append(
+                    f"{np.median(new_val)}"
+                )
+                plot_params["conv_CI"].append(
+                    [f"{np.percentile(new_val,q=lower_q)} lower",
+                     f"{np.percentile(new_val,q=100-lower_q)} higher"]
+                )
+    return plot_params
+
+
 def get_titles(psr_name, core):
+    """Get titles for timing model parameters
+    :param psr_name: Name of the pulsar
+    :param core: `la_forge` core object
+    """
     titles = []
     for core_param in core.params:
         if "timing" in core_param.split("_"):
@@ -568,26 +684,15 @@ def get_titles(psr_name, core):
                 titles.append((" ").join(core_param.split("_")[1:]))
             else:
                 titles.append(core_param)
-    """
-    else:
-        unparams=['lnpost','lnlike','chain_accept','pt_chain_accept']
-        for com_par in params:
-            if (
-                com_par
-                not in core.params
-            ):
-                unparams.append(com_par)
-        for ncom_par in unparams:
-            if ncom_par in params:
-                del titles[params.index(ncom_par)]
-                del params[
-                    params.index(ncom_par)
-                ]
-    """
     return titles
 
 
 def get_common_params_titles(psr_name, core_list, exclude=True):
+    """Renames gets common parameters and titles
+    :param psr_name: Name of the pulsar
+    :param core_list: list of `la_forge` core objects
+    :param exclude: exclude ["lnpost","lnlike","chain_accept","pt_chain_accept",]
+    """
     common_params = []
     common_titles = []
     for core in core_list:
@@ -626,7 +731,10 @@ def get_common_params_titles(psr_name, core_list, exclude=True):
 
 
 def get_other_param_overlap(psr_name, core_list):
-    """Returns a dictionary of params with list of indices for corresponding core in core_list"""
+    """Gets a dictionary of params with list of indices for corresponding core in core_list
+    :param psr_name: Name of the pulsar
+    :param core_list: list of `la_forge` core objects
+    """
     boring_params = ["lnpost", "lnlike", "chain_accept", "pt_chain_accept"]
     common_params_all, _ = get_common_params_titles(psr_name, core_list, exclude=False)
     com_par_dict = defaultdict(list)
@@ -642,7 +750,6 @@ def plot_all_param_overlap(
     psr_name,
     core_list,
     core_list_legend=None,
-    com_par_dict=None,
     exclude=True,
     real_tm_pars=True,
     conf_int=None,
@@ -651,11 +758,38 @@ def plot_all_param_overlap(
     ncols=3,
     hist_kwargs={},
     fig_kwargs={},
+    **kwargs,
 ):
+    """Plots common parameters between cores in core_list
+    :param psr_name: Name of the pulsar
+    :param core_list: list of `la_forge` core objects
+    :param core_list_legend: list of labels corresponding to core_list
+    :param exclude: excludes ["lnpost","lnlike","chain_accept","pt_chain_accept",]
+    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    :param conf_int: float shades confidence interval region can be float between 0 and 1
+    :param close: Whether to close the figure after displaying
+    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    :param ncols: number of columns to plot
+    :param hist_kwargs: kwargs for the histograms
+    :param fig_kwargs: general figure kwargs
+    """
     if not core_list_legend:
         core_list_legend = []
         for core in core_list:
             core_list_legend.append(core.label)
+
+    linestyles = kwargs.get("linestyles", ["-" for x in core_list])
+    suptitle = fig_kwargs.get("suptitle", f"{psr_name} Comparison Plots")
+    labelfontsize = fig_kwargs.get("labelfontsize", 18)
+    titlefontsize = fig_kwargs.get("titlefontsize", 16)
+    suptitlefontsize = fig_kwargs.get("suptitlefontsize", 24)
+    suptitleloc = fig_kwargs.get("suptitleloc", (0.35, 0.94))
+    legendloc = fig_kwargs.get("legendloc", (0.45, 0.97))
+    legendfontsize = fig_kwargs.get("legendfontsize", 12)
+    colors = fig_kwargs.get("colors", [f"C{ii}" for ii in range(len(core_list_legend))])
+    wspace = fig_kwargs.get("wspace", 0.1)
+    hspace = fig_kwargs.get("hspace", 0.4)
+    figsize = fig_kwargs.get("figsize", (15, 10))
 
     hist_core_list_kwargs = {
         "hist": True,
@@ -663,40 +797,8 @@ def plot_all_param_overlap(
         "title_y": 1.4,
         "hist_kwargs": hist_kwargs,
         "linewidth": 3.0,
+        "linestyle": linestyles,
     }
-
-    if "suptitle" not in fig_kwargs.keys():
-        suptitle = f"{psr_name} Mass Plots"
-    else:
-        suptitle = fig_kwargs["suptitle"]
-    if "suptitlefontsize" not in fig_kwargs.keys():
-        suptitlefontsize = 24
-    else:
-        suptitlefontsize = fig_kwargs["suptitlefontsize"]
-    if "suptitleloc" not in fig_kwargs.keys():
-        suptitleloc = (0.25, 1.05)
-    else:
-        suptitleloc = fig_kwargs["suptitleloc"]
-    if "legendloc" not in fig_kwargs.keys():
-        legendloc = (0.45, 0.97)
-    else:
-        legendloc = fig_kwargs["legendloc"]
-    if "legendfontsize" not in fig_kwargs.keys():
-        legendfontsize = 12
-    else:
-        legendfontsize = fig_kwargs["legendfontsize"]
-    if "colors" not in fig_kwargs.keys():
-        colors = [f"C{ii}" for ii in range(len(core_list_legend))]
-    else:
-        colors = fig_kwargs["colors"]
-    if "wspace" not in fig_kwargs.keys():
-        wspace = 0.1
-    else:
-        wspace = fig_kwargs["wspace"]
-    if "hspace" not in fig_kwargs.keys():
-        hspace = 0.2
-    else:
-        hspace = fig_kwargs["hspace"]
 
     common_params_all, common_titles_all = get_common_params_titles(
         psr_name, core_list, exclude=exclude
@@ -732,26 +834,25 @@ def plot_all_param_overlap(
             allaxes = fig.get_axes()
             for ax in allaxes:
                 splt_key = ax.get_title()
-                if par_sigma:
-                    if splt_key in par_sigma:
-                        val = par_sigma[splt_key][0]
-                        err = par_sigma[splt_key][1]
-                        fill_space_x = np.linspace(val - err, val + err, 20)
-                        ax.fill_between(
-                            fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
-                        )
-                        ax.axvline(val, color="k", linestyle="--")
-                    elif splt_key == "COSI" and "SINI" in par_sigma:
-                        sin_val, sin_err, _ = par_sigma["SINI"]
-                        val = np.longdouble(np.sqrt(1 - sin_val**2))
-                        err = np.longdouble(
-                            np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
-                        )
-                        fill_space_x = np.linspace(val - err, val + err, 20)
-                        ax.fill_between(
-                            fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
-                        )
-                        ax.axvline(val, color="k", linestyle="--")
+                if splt_key in par_sigma:
+                    val = par_sigma[splt_key][0]
+                    err = par_sigma[splt_key][1]
+                    fill_space_x = np.linspace(val - err, val + err, 20)
+                    ax.fill_between(
+                        fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
+                    )
+                    ax.axvline(val, color="k", linestyle="--")
+                elif splt_key == "COSI" and "SINI" in par_sigma:
+                    sin_val, sin_err, _ = par_sigma["SINI"]
+                    val = np.longdouble(np.sqrt(1 - sin_val**2))
+                    err = np.longdouble(
+                        np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
+                    )
+                    fill_space_x = np.linspace(val - err, val + err, 20)
+                    ax.fill_between(
+                        fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
+                    )
+                    ax.axvline(val, color="k", linestyle="--")
 
                 if conf_int:
                     if isinstance(conf_int, (float, int)):
@@ -766,7 +867,7 @@ def plot_all_param_overlap(
                             common_params_all, common_titles_all
                         ):
                             if splt_key == com_title:
-                                low, up = core.get_param_confint(
+                                low, up = core.get_param_credint(
                                     com_par, interval=conf_int
                                 )
                                 ax.fill_between(
@@ -780,7 +881,13 @@ def plot_all_param_overlap(
         patches = []
         for jj, lab in enumerate(core_list_legend):
             patches.append(
-                mpl.patches.Patch(color=colors[jj], label=lab)
+                mpl.patches.Patch(
+                    color=colors[jj],
+                    linestyle=linestyles[jj],
+                    fill=False,
+                    label=lab,
+                    linewidth=3,
+                )
             )  # .split(":")[-1]))
 
         fig.legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
@@ -810,168 +917,152 @@ def plot_other_param_overlap(
     psr_name,
     core_list,
     core_list_legend=None,
-    com_par_dict=None,
     real_tm_pars=True,
-    close=False,
+    close=True,
+    selection="all",
     par_sigma={},
+    hist_kwargs={},
+    **kwargs,
 ):
-    if not com_par_dict:
-        com_par_dict = get_other_param_overlap(psr_name, core_list)
+    """Plots non-common parameters between cores in core_list
+    :param psr_name: Name of the pulsar
+    :param core_list: list of `la_forge` core objects
+    :param core_list_legend: list of labels corresponding to core_list
+    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    :param close: Whether to close the figure after displaying
+    :param selection: str, Used to select various groups of parameters:
+        see `get_param_groups` for details
+    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    :param hist_kwargs: kwargs for the histograms
+    """
+    linestyles = kwargs.get("linestyles", ["-" for x in core_list])
+    legendloc = kwargs.get("legendloc", (0.0, 0.95 - 0.03 * len(core_list)))
+    title_y = kwargs.get("title_y", 1.0 + 0.05 * len(core_list))
+
+    com_par_dict = get_other_param_overlap(psr_name, core_list)
     if not core_list_legend:
         core_list_legend = []
         for core in core_list:
             core_list_legend.append(core.label)
+
     hist_core_list_kwargs = {
         "hist": True,
         "ncols": 1,
-        "title_y": 1.4,
-        "hist_kwargs": dict(fill=False),
+        "title_y": title_y,
+        "hist_kwargs": hist_kwargs,
         "linewidth": 3.0,
+        "linestyle": linestyles,
     }
+
+    selected_params = []
+    for c_l in core_list:
+        tmp_selected_params = get_param_groups(c_l, selection=selection)
+        for tsp in tmp_selected_params["par"]:
+            if tsp not in selected_params:
+                selected_params.append(tsp)
+
     plotted_cosi = False
     for key, vals in com_par_dict.items():
-        if close:
-            if "SINI" in key or "COSI" in key:
-                if not plotted_cosi:
-                    if (
-                        "SINI" in key
-                        and ("_").join(key.split("_")[:-1] + ["COSI"])
-                        in com_par_dict.keys()
-                    ):
-                        cosi_chains = []
-                        cosi_chains_labels = []
-                        for c in vals:
-                            gpar_kwargs = dg._get_gpar_kwargs(
-                                core_list[c], real_tm_pars
-                            )
-                            cosi_chains.append(
-                                np.sqrt(
-                                    1 - core_list[c].get_param(key, **gpar_kwargs) ** 2
-                                )
-                            )
-                            cosi_chains_labels.append(core_list_legend[c])
-
-                        for c in com_par_dict[
-                            ("_").join(key.split("_")[:-1] + ["COSI"])
-                        ]:
-                            gpar_kwargs = dg._get_gpar_kwargs(
-                                core_list[c], real_tm_pars
-                            )
-                            cosi_chains.append(
-                                core_list[c].get_param("COSI", **gpar_kwargs)
-                            )
-                            cosi_chains_labels.append(core_list_legend[c])
-                    elif (
-                        "COSI" in key
-                        and ("_").join(key.split("_")[:-1] + ["SINI"])
-                        in com_par_dict.keys()
-                    ):
-                        cosi_chains_labels = []
-                        cosi_chains = []
-                        for c in vals:
-                            gpar_kwargs = dg._get_gpar_kwargs(
-                                core_list[c], real_tm_pars
-                            )
-                            cosi_chains.append(
-                                core_list[c].get_param(key, **gpar_kwargs)
-                            )
-                            cosi_chains_labels.append(core_list_legend[c])
-
-                        for c in com_par_dict[
-                            ("_").join(key.split("_")[:-1] + ["SINI"])
-                        ]:
-                            gpar_kwargs = dg._get_gpar_kwargs(
-                                core_list[c], real_tm_pars
-                            )
-                            cosi_chains.append(
-                                np.sqrt(
-                                    1
-                                    - core_list[c].get_param("SINI", **gpar_kwargs) ** 2
-                                )
-                            )
-                            cosi_chains_labels.append(core_list_legend[c])
-
-                    fig = plt.figure(figsize=[15, 4])
-                    axis = fig.add_subplot(1, 1, 1)
-                    for i, chain in enumerate(cosi_chains):
-                        plt.hist(
-                            chain,
-                            bins=40,
-                            density=True,
-                            log=False,
-                            linestyle="-",
-                            histtype="step",
-                            linewidth=hist_core_list_kwargs["linewidth"],
-                            label=cosi_chains_labels[i],
-                        )
-                    plt.legend()
-                    plt.title("COSI")
-            else:
-                hist_core_list_kwargs["title_y"] = 1.0 + 0.05 * len(core_list)
-                y = 0.95 - 0.03 * len(core_list)
+        if key in selected_params:
+            if close:
+                # hist_core_list_kwargs["title_y"] = 1.0 + 0.05 * len(core_list)
                 dg.plot_chains(
                     [core_list[c] for c in vals],
                     suptitle=psr_name,
                     pars=[key],
                     legend_labels=[core_list_legend[c] for c in vals],
-                    legend_loc=(0.0, y),
+                    legend_loc=legendloc,
                     real_tm_pars=real_tm_pars,
                     show=False,
                     close=False,
                     **hist_core_list_kwargs,
                 )
-            if par_sigma:
-                splt_key = key.split("_")[-1]
-                if splt_key == "COSI" or splt_key == "SINI" and "SINI" in par_sigma:
-                    if not plotted_cosi:
-                        sin_val, sin_err, _ = par_sigma["SINI"]
-                        val = np.longdouble(np.sqrt(1 - sin_val**2))
-                        err = np.longdouble(
-                            np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
-                        )
-                        fill_space_x = np.linspace(val - err, val + err, 20)
-                        plt.fill_between(
-                            fill_space_x,
-                            plt.gca().get_ylim()[1],
-                            color="grey",
-                            alpha=0.2,
-                        )
-                        plt.axvline(val, color="k", linestyle="--")
-                        plotted_cosi = True
-                else:
-                    if splt_key in par_sigma:
-                        val = par_sigma[splt_key][0]
-                        err = par_sigma[splt_key][1]
-                        fill_space_x = np.linspace(val - err, val + err, 20)
-                        plt.fill_between(
-                            fill_space_x,
-                            plt.gca().get_ylim()[1],
-                            color="grey",
-                            alpha=0.2,
-                        )
-                        plt.axvline(val, color="k", linestyle="--")
-            plt.show()
-            plt.close()
-        else:
-            hist_core_list_kwargs["title_y"] = 1.0 + 0.05 * len(core_list)
-            y = 0.95 - 0.03 * len(core_list)
-            dg.plot_chains(
-                [core_list[c] for c in vals],
-                suptitle=psr_name,
-                pars=[key],
-                legend_labels=[core_list_legend[c] for c in vals],
-                legend_loc=(0.0, y),
-                real_tm_pars=real_tm_pars,
-                **hist_core_list_kwargs,
-            )
-        print("")
+                if par_sigma:
+                    fig = plt.gcf()
+                    allaxes = fig.get_axes()
+                    for ax in allaxes:
+                        full_key = ax.get_title()
+                        splt_key = full_key.split("_")
+                        if "DMX" in splt_key:
+                            par_key = ("_").join(splt_key[-2:])
+                        else:
+                            par_key = splt_key[-1]
+                        if par_key in par_sigma:
+                            val = par_sigma[par_key][0]
+                            err = par_sigma[par_key][1]
+                            fill_space_x = np.linspace(val - err, val + err, 20)
+                            ax.fill_between(
+                                fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
+                            )
+                            ax.axvline(val, color="k", linestyle="--")
+                        elif splt_key == "COSI" and "SINI" in par_sigma:
+                            sin_val, sin_err, _ = par_sigma["SINI"]
+                            val = np.longdouble(np.sqrt(1 - sin_val**2))
+                            err = np.longdouble(
+                                np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
+                            )
+                            fill_space_x = np.linspace(val - err, val + err, 20)
+                            ax.fill_between(
+                                fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
+                            )
+                            ax.axvline(val, color="k", linestyle="--")
+                plt.show()
+                plt.close()
+            else:
+                # hist_core_list_kwargs["title_y"] = 1.0 + 0.05 * len(core_list)
+                dg.plot_chains(
+                    [core_list[c] for c in vals],
+                    suptitle=psr_name,
+                    pars=[key],
+                    legend_labels=[core_list_legend[c] for c in vals],
+                    legend_loc=legendloc,
+                    real_tm_pars=real_tm_pars,
+                    show=False,
+                    close=False,
+                    **hist_core_list_kwargs,
+                )
+
+                if par_sigma:
+                    fig = plt.gcf()
+                    allaxes = fig.get_axes()
+                    for ax in allaxes:
+                        splt_key = ax.get_title()
+                        if splt_key in par_sigma:
+                            val = par_sigma[splt_key][0]
+                            err = par_sigma[splt_key][1]
+                            fill_space_x = np.linspace(val - err, val + err, 20)
+                            ax.fill_between(
+                                fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
+                            )
+                            ax.axvline(val, color="k", linestyle="--")
+                        elif splt_key == "COSI" and "SINI" in par_sigma:
+                            sin_val, sin_err, _ = par_sigma["SINI"]
+                            val = np.longdouble(np.sqrt(1 - sin_val**2))
+                            err = np.longdouble(
+                                np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
+                            )
+                            fill_space_x = np.linspace(val - err, val + err, 20)
+                            ax.fill_between(
+                                fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
+                            )
+                            ax.axvline(val, color="k", linestyle="--")
+            print("")
 
 
-def get_fancy_labels(labels, overline=False):
+def get_fancy_labels(labels):
+    """Latex compatible labels
+    :param labels: labels to change
+    """
     fancy_labels = []
     for lab in labels:
         if lab == "A1":
             fancy_labels.append(r"$x-\overline{x}$ (lt-s)")
+        elif lab == "XDOT" or lab == "A1DOT":
+            fancy_labels.append(r"$\dot{x}-\overline{\dot{x}}$ (lt-s~s^{-1})")
+        elif lab == "OM":
+            fancy_labels.append(r"$\omega-\overline{\omega}$ (degrees)")
+        elif lab == "ECC":
+            fancy_labels.append(r"$e-\overline{e}$")
         elif lab == "EPS1":
             fancy_labels.append(r"$\epsilon_{1}-\overline{\epsilon_{1}}$")
         elif lab == "EPS2":
@@ -987,6 +1078,9 @@ def get_fancy_labels(labels, overline=False):
         elif lab == "TASC":
             fancy_labels.append(r"$T_{\mathrm{asc}}-\overline{T_{\mathrm{asc}}}$")
             # fancy_labels.append(r'$T_{\mathrm{asc}}-\overline{T_{\mathrm{asc}}}$ (MJD)')
+        elif lab == "T0":
+            fancy_labels.append(r"$T_{0}-\overline{T_{0}}$")
+            # fancy_labels.append(r'$T_{0}-\overline{T_{0}}$ (MJD)')
         elif lab == "ELONG":
             fancy_labels.append(r"$\lambda-\overline{\lambda}$")
             # fancy_labels.append(r'$\lambda-\overline{\lambda}$ (degrees)')
@@ -1014,6 +1108,10 @@ def get_fancy_labels(labels, overline=False):
             fancy_labels.append(r"$\mathrm{log}_{10}$EQUAD")
         elif "ecorr" in lab:
             fancy_labels.append(r"$\mathrm{log}_{10}$ECORR")
+        elif "log10" in lab:
+            fancy_labels.append(r"$\mathrm{log}_{10}(A)$")
+        elif "gamma" in lab:
+            fancy_labels.append(r"$\gamma$")
         else:
             fancy_labels.append(lab)
     return fancy_labels
@@ -1023,7 +1121,6 @@ def fancy_plot_all_param_overlap(
     psr_name,
     core_list,
     core_list_legend=None,
-    com_par_dict=None,
     exclude=True,
     par_sigma={},
     conf_int=False,
@@ -1033,7 +1130,23 @@ def fancy_plot_all_param_overlap(
     selection="all",
     hist_kwargs={},
     fig_kwargs={},
+    **kwargs,
 ):
+    """Plots common parameters between cores in core_list with fancier plotting methods
+    :param psr_name: Name of the pulsar
+    :param core_list: list of `la_forge` core objects
+    :param core_list_legend: list of labels corresponding to core_list
+    :param exclude: excludes ["lnpost","lnlike","chain_accept","pt_chain_accept",]
+    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    :param conf_int: float shades confidence interval region can be float between 0 and 1
+    :param preliminary: Whether to display large 'preliminary' over plot
+    :param ncols: number of columns to plot
+    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    :param selection: str, Used to select various groups of parameters:
+        see `get_param_groups` for details
+    :param hist_kwargs: kwargs for the histograms
+    :param fig_kwargs: general figure kwargs
+    """
     if not core_list_legend:
         core_list_legend = []
         for core in core_list:
@@ -1046,46 +1159,22 @@ def fancy_plot_all_param_overlap(
             "histtype": "step",
             "bins": 40,
         }
-    if "suptitle" not in fig_kwargs.keys():
-        suptitle = f"{psr_name} Mass Plots"
-    else:
-        suptitle = fig_kwargs["suptitle"]
-    if "labelfontsize" not in fig_kwargs.keys():
-        labelfontsize = 18
-    else:
-        labelfontsize = fig_kwargs["labelfontsize"]
-    if "titlefontsize" not in fig_kwargs.keys():
-        titlefontsize = 16
-    else:
-        titlefontsize = fig_kwargs["titlefontsize"]
-    if "suptitlefontsize" not in fig_kwargs.keys():
-        suptitlefontsize = 24
-    else:
-        suptitlefontsize = fig_kwargs["suptitlefontsize"]
-    if "suptitleloc" not in fig_kwargs.keys():
-        suptitleloc = (0.35, 0.94)
-    else:
-        suptitleloc = fig_kwargs["suptitleloc"]
-    if "legendloc" not in fig_kwargs.keys():
-        legendloc = (0.5, 0.93)
-    else:
-        legendloc = fig_kwargs["legendloc"]
-    if "legendfontsize" not in fig_kwargs.keys():
-        legendfontsize = 12
-    else:
-        legendfontsize = fig_kwargs["legendfontsize"]
-    if "colors" not in fig_kwargs.keys():
-        colors = [f"C{ii}" for ii in range(len(core_list_legend))]
-    else:
-        colors = fig_kwargs["colors"]
-    if "wspace" not in fig_kwargs.keys():
-        wspace = 0.1
-    else:
-        wspace = fig_kwargs["wspace"]
-    if "hspace" not in fig_kwargs.keys():
-        hspace = 0.4
-    else:
-        hspace = fig_kwargs["hspace"]
+
+    linestyles = kwargs.get("linestyles", ["-" for x in core_list])
+    close = kwargs.get("close", True)
+    show_suptitle = kwargs.get("show_suptitle", True)
+
+    suptitle = fig_kwargs.get("suptitle", f"{psr_name} Comparison Plots")
+    labelfontsize = fig_kwargs.get("labelfontsize", 18)
+    titlefontsize = fig_kwargs.get("titlefontsize", 16)
+    suptitlefontsize = fig_kwargs.get("suptitlefontsize", 24)
+    suptitleloc = fig_kwargs.get("suptitleloc", (0.35, 0.94))
+    legendloc = fig_kwargs.get("legendloc", (0.5, 0.93))
+    legendfontsize = fig_kwargs.get("legendfontsize", 12)
+    colors = fig_kwargs.get("colors", [f"C{ii}" for ii in range(len(core_list_legend))])
+    wspace = fig_kwargs.get("wspace", 0.1)
+    hspace = fig_kwargs.get("hspace", 0.4)
+    figsize = fig_kwargs.get("figsize", (15, 10))
 
     common_params_all, common_titles_all = get_common_params_titles(
         psr_name, core_list, exclude=exclude
@@ -1120,11 +1209,15 @@ def fancy_plot_all_param_overlap(
         if par in selected_params["par"]:
             cell = ii + 1
             axis = fig.add_subplot(nrows, ncols, cell)
-            for co in core_list:
+            for jj, co in enumerate(core_list):
                 if isinstance(co, TimingCore):
-                    plt.hist(co.get_param(par, tm_convert=real_tm_pars), **hist_kwargs)
+                    plt.hist(
+                        co.get_param(par, tm_convert=real_tm_pars),
+                        linestyle=linestyles[jj],
+                        **hist_kwargs,
+                    )
                 elif isinstance(co, Core):
-                    plt.hist(co.get_param(par), **hist_kwargs)
+                    plt.hist(co.get_param(par), linestyle=linestyles[jj], **hist_kwargs)
             if "efac" in selected_common_titles[ii]:
                 axis.set_title(
                     selected_common_titles[ii].split("efac")[0], fontsize=titlefontsize
@@ -1181,7 +1274,7 @@ def fancy_plot_all_param_overlap(
                         selected_common_params, selected_common_titles
                     ):
                         if splt_key == com_title:
-                            low, up = core.get_param_confint(com_par, interval=conf_int)
+                            low, up = core.get_param_credint(com_par, interval=conf_int)
                             axis.fill_between(
                                 [low, up],
                                 axis.get_ylim()[1],
@@ -1191,28 +1284,43 @@ def fancy_plot_all_param_overlap(
         axis.set_yticks([])
     patches = []
     for jj, lab in enumerate(core_list_legend):
-        patches.append(mpl.patches.Patch(color=colors[jj], label=lab))
+        patches.append(
+            mpl.patches.Patch(
+                color=colors[jj],
+                linestyle=linestyles[jj],
+                fill=False,
+                label=lab,
+                linewidth=3,
+            )
+        )
 
     if preliminary:
         fig.text(txt_loc[0], txt_loc[1], txt, **txt_kwargs)
     fig.legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
     # fig.subplots_adjust(top=0.96)
-    plt.suptitle(
-        suptitle,
-        fontsize=suptitlefontsize,
-        x=suptitleloc[0],
-        y=suptitleloc[1],
-    )
+
+    if show_suptitle:
+        plt.suptitle(
+            suptitle,
+            fontsize=suptitlefontsize,
+            x=suptitleloc[0],
+            y=suptitleloc[1],
+        )
     # plt.savefig(f'Figures/{psr_name}_cfr19_common_pars_2.png', dpi=150, bbox_inches='tight')
     # plt.savefig(f'Figures/{psr_name}_12p5yr_common_pars.png', dpi=150, bbox_inches='tight')
-    plt.show()
+    if close:
+        plt.show()
+        plt.close()
 
 
 def get_param_groups(core, selection="kep"):
-    """selection = 'all', or 'kep','gr','spin','pos','noise', 'dm', 'chrom', 'dmx', 'fd' all joined by underscores"""
+    """Used to group parameters
+    :param core: `la_forge` core object
+    :param selection: {'all', or 'kep','mass','gr','spin','pos','noise', 'dm', 'dmgp', 'chrom', 'dmx', 'fd'
+        all joined by underscores"""
     if selection == "all":
-        selection = "kep_binary_gr_pm_spin_pos_noise_dm_chrom_dmx_fd"
+        selection = "kep_mass_gr_pm_spin_pos_noise_dm_dmgp_chrom_dmx_fd"
     kep_pars = [
         "PB",
         "PBDOT",
@@ -1227,9 +1335,11 @@ def get_param_groups(core, selection="kep"):
         "EPS2DOT",
         "FB",
         "SINI",
-        "COSI" "MTOT",
+        "COSI",
+        "MTOT",
         "M2",
         "XDOT",
+        "A1DOT",
         "X2DOT",
         "EDOT",
         "KOM",
@@ -1263,13 +1373,17 @@ def get_param_groups(core, selection="kep"):
 
     pm_pars = ["PMDEC", "PMRA", "PMELONG", "PMELAT", "PMRV", "PMBETA", "PMLAMBDA"]
 
-    dm_pars = [
+    dm_pars = ["DM", "DM1", "DM2", "dm0", "dm1", "dm2"]
+    dmgp_pars = [
         "dm_gp_log10_sigma",
         "dm_gp_log10_ell",
         "dm_gp_log10_gam_p",
         "dm_gp_log10_p",
         "dm_gp_log10_ell2",
         "dm_gp_log10_alpha_wgt",
+        "dmexp_1_log10_Amp",
+        "dmexp_1_log10_tau",
+        "dmexp_1_t0",
         "n_earth",
     ]
 
@@ -1288,67 +1402,94 @@ def get_param_groups(core, selection="kep"):
     plot_params = defaultdict(list)
     for param in core.params:
         split_param = param.split("_")[-1]
-        if "kep" in selection_list:
-            if split_param in kep_pars and split_param not in plot_params:
+        if "kep" in selection_list and param not in plot_params["par"]:
+            if split_param in kep_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
-        if "mass" in selection_list:
-            if split_param in mass_pars and split_param not in plot_params:
+        if "mass" in selection_list and param not in plot_params["par"]:
+            if split_param in mass_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
-        if "pos" in selection_list:
-            if split_param in pos_pars and split_param not in plot_params:
+        if "pos" in selection_list and param not in plot_params["par"]:
+            if split_param in pos_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
-        if "noise" in selection_list:
-            if split_param in noise_pars and split_param not in plot_params:
+        if "noise" in selection_list and param not in plot_params["par"]:
+            if split_param in noise_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append((" ").join(param.split("_")[1:]))
-        if "spin" in selection_list:
-            if split_param in spin_pars and split_param not in plot_params:
+        if "spin" in selection_list and param not in plot_params["par"]:
+            if split_param in spin_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
-        if "gr" in selection_list:
-            if split_param in gr_pars and split_param not in plot_params:
+        if "gr" in selection_list and param not in plot_params["par"]:
+            if split_param in gr_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
-        if "pm" in selection_list:
-            if split_param in pm_pars and split_param not in plot_params:
+        if "pm" in selection_list and param not in plot_params["par"]:
+            if split_param in pm_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
-        if "fd" in selection_list:
-            if split_param in fd_pars and split_param not in plot_params:
+        if "fd" in selection_list and param not in plot_params["par"]:
+            if split_param in fd_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(split_param)
-        if "dm" in selection_list:
-            if ("_").join(param.split("_")[1:]) in dm_pars and ("_").join(
-                param.split("_")[1:]
-            ) not in plot_params:
+        if "dm" in selection_list and param not in plot_params["par"]:
+            if split_param in dm_pars:
+                plot_params["par"].append(param)
+                plot_params["title"].append(split_param)  # (" ").join(param.split("_")[-2:]))
+        if "dmgp" in selection_list and param not in plot_params["par"]:
+            if ("_").join(param.split("_")[1:]) in dmgp_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(param)  # (" ").join(param.split("_")[-2:]))
-        if "chrom" in selection_list:
-            if ("_").join(param.split("_")[1:]) in chrom_gp_pars and ("_").join(
-                param.split("_")[1:]
-            ) not in plot_params:
+        if "chrom" in selection_list and param not in plot_params["par"]:
+            if ("_").join(param.split("_")[1:]) in chrom_gp_pars:
                 plot_params["par"].append(param)
                 plot_params["title"].append(param)
             elif param in dm_pars and param not in plot_params:
                 plot_params["par"].append(param)
                 plot_params["title"].append(param)
-        if "dmx" in selection_list:
-            if "DMX_" in param and split_param not in plot_params:
+        if "dmx" in selection_list and param not in plot_params["par"]:
+            if "DMX_" in param:
                 plot_params["par"].append(param)
                 plot_params["title"].append(("_").join(param.split("_")[-2:]))
-        if "excludes" in selection_list:
-            if split_param in excludes and split_param not in plot_params:
+        if "excludes" in selection_list and param not in plot_params["par"]:
+            if split_param in excludes:
                 plot_params["par"].append(param)
                 plot_params["title"].append(param)
+
     return plot_params
 
 
 def corner_plots(
-    psr_name, core, selection="kep", save=False, real_tm_pars=False, truths=True
+    psr_name,
+    core,
+    selection="kep",
+    save=False,
+    real_tm_pars=False,
+    truths=True,
+    hist2d_kwargs={},
+    corner_label_kwargs={},
 ):
+    """Plots a corner plot for core
+    :param psr_name: Name of the pulsar
+    :param core: `la_forge` core object
+    :param save: Whether to save the figure
+    :param selection: str, Used to select various groups of parameters:
+        see `get_param_groups` for details
+    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    :param truths: Whether to plot shaded truth regions (only assumes scaled for now)
+    :param hist2d_kwargs: kwargs for the histograms
+    :param corner_label_kwargs: kwargs for the corner labels
+    """
+    if not hist2d_kwargs:
+        hist2d_kwargs = {
+            "plot_density": False,
+            "no_fill_contours": True,
+            "data_kwargs": {"alpha": 0.02},
+        }
+    if not corner_label_kwargs:
+        corner_label_kwargs = {"fontsize": 20, "rotation": 0}
 
     plot_params = get_param_groups(core, selection=selection)
 
@@ -1380,28 +1521,43 @@ def corner_plots(
     else:
         plot_truths = None
 
-    hist2d_kwargs = {
-        "plot_density": False,
-        "no_fill_contours": True,
-        "data_kwargs": {"alpha": 0.02},
-    }
-    hist_kwargs = {"range": (-5, 5)}
-    ranges = np.ones(len(plot_params)) * 0.98
+    # hist_kwargs = {"range": (-5, 5)}
+    ranges = np.ones(len(plot_params)) * 0.95
     if isinstance(core, TimingCore):
-        plt_param = core.get_param(plot_params["par"], tm_convert=real_tm_pars)
+        tmp_plt_params = []
+        for ppar in plot_params["par"]:
+            tmp_plt_params.append(core.get_param(ppar, tm_convert=real_tm_pars))
+        plt_param = np.asarray(tmp_plt_params).T
     elif isinstance(core, Core):
-        plt_param = core.get_param(plot_params["par"])
-    fig = corner.corner(
-        plt_param,
-        truths=plot_truths["val"],
-        truth_color="k",
-        color="C0",
-        ranges=ranges,
-        labels=plot_params["title"],
-        levels=[0.68, 0.95],
-        label_kwargs={"fontsize": 20, "rotation": 45},
-        **hist2d_kwargs,
-    )
+        tmp_plt_params = []
+        for ppar in plot_params["par"]:
+            tmp_plt_params.append(core.get_param(ppar))
+        plt_param = np.asarray(tmp_plt_params).T
+
+    if truths:
+        fig = corner.corner(
+            plt_param,
+            truths=plot_truths["val"],
+            truth_color="k",
+            color="C0",
+            ranges=ranges,
+            labels=plot_params["title"],
+            levels=[0.68, 0.95],
+            label_kwargs=corner_label_kwargs,
+            labelpad=0.25,
+            **hist2d_kwargs,
+        )
+    else:
+        fig = corner.corner(
+            plt_param,
+            color="C0",
+            # ranges=ranges,
+            labels=plot_params["title"],
+            levels=[0.68, 0.95],
+            label_kwargs=corner_label_kwargs,
+            labelpad=0.25,
+            **hist2d_kwargs,
+        )
 
     ndim = len(plot_params["par"])
     axes = np.array(fig.axes).reshape((ndim, ndim))
@@ -1449,12 +1605,13 @@ def mass_pulsar(PB, A1, SINI, M2, errors={}):
     function uses a Newton-Raphson method since the equation is
     transcendental.
 
-    Computes Keplerian mass function, given projected size and orbital period.
-    Inputs:
-        - PB = orbital period [days]
-        - A1 = projected semimajor axis [lt-s]
-    Output:
-        - mass function [solar mass]
+    :param PB: orbital period [days]
+    :param A1: projected semimajor axis [lt-s]
+    :param SINI: sine of the system inclination [degrees]
+    :param M2: compaion mass [solar mass]
+    :param errors: dictionary of errors on each param
+
+    :return: pulsar mass [solar mass]
     """
     T_sun = 4.925490947e-6  # conversion from solar masses to seconds
     nb = 2 * np.pi / PB / 86400
@@ -1483,72 +1640,68 @@ def mass_plot(
     psr_name,
     core_list,
     core_list_legend=None,
-    com_par_dict=None,
-    exclude=True,
     real_tm_pars=True,
     preliminary=False,
     conf_int=None,
-    close=True,
     print_conf_int=False,
     par_sigma={},
     hist_kwargs={},
     fig_kwargs={},
+    **kwargs,
 ):
+    """Plots mass parameters for all cores in core_list
+    :param psr_name: Name of the pulsar
+    :param core_list: list of `la_forge` core objects
+    :param core_list_legend: list of labels corresponding to core_list
+    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    :param preliminary: Whether to display large 'preliminary' over plot
+    :param conf_int: float shades confidence interval region can be float between 0 and 1
+    :param print_conf_int: Whether to print out confidence intervals
+    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    :param ncols: number of columns to plot
+    :param hist_kwargs: kwargs for the histograms
+    :param fig_kwargs: general figure kwargs
+    """
     if not core_list_legend:
         core_list_legend = []
         for core in core_list:
             core_list_legend.append(core.label)
 
-    if not hist_kwargs:
-        hist_kwargs = {
-            "linewidth": 3.0,
-            "density": True,
-            "histtype": "step",
-            "bins": 40,
+    hist_kwargs.update(
+        {
+            "linewidth": hist_kwargs.get("linewidth", 3.0),
+            "density": hist_kwargs.get("density", True),
+            "histtype": hist_kwargs.get("histtype", "step"),
+            "bins": hist_kwargs.get("bins", 40),
         }
+    )
 
-    if "suptitle" not in fig_kwargs.keys():
-        suptitle = f"{psr_name} Mass Plots"
-    else:
-        suptitle = fig_kwargs["suptitle"]
-    if "suptitlefontsize" not in fig_kwargs.keys():
-        suptitlefontsize = 24
-    else:
-        suptitlefontsize = fig_kwargs["suptitlefontsize"]
-    if "suptitleloc" not in fig_kwargs.keys():
-        suptitleloc = (0.25, 1.01)
-    else:
-        suptitleloc = fig_kwargs["suptitleloc"]
-    if "legendloc" not in fig_kwargs.keys():
-        legendloc = (0.45, 0.925)
-    else:
-        legendloc = fig_kwargs["legendloc"]
-    if "legendfontsize" not in fig_kwargs.keys():
-        legendfontsize = 12
-    else:
-        legendfontsize = fig_kwargs["legendfontsize"]
-    if "colors" not in fig_kwargs.keys():
-        colors = [f"C{ii}" for ii in range(len(core_list_legend))]
-    else:
-        colors = fig_kwargs["colors"]
-    if "wspace" not in fig_kwargs.keys():
-        wspace = 0.1
-    else:
-        wspace = fig_kwargs["wspace"]
-    if "hspace" not in fig_kwargs.keys():
-        hspace = 0.4
-    else:
-        hspace = fig_kwargs["hspace"]
-    if "figsize" not in fig_kwargs.keys():
-        figsize = (15, 10)
-    else:
-        figsize = fig_kwargs["figsize"]
+    linestyles = kwargs.get("linestyles", ["-" for x in core_list])
+    show_legend = kwargs.get("show_legend", True)
+    show_suptitle = kwargs.get("show_suptitle", True)
+    show_xlabel = kwargs.get("show_xlabel", True)
+    xlabel_rotation = kwargs.get("xlabel_rotation", 0)
 
-    fig, axes = plt.subplots(3, 1, figsize=figsize)
+    suptitle = fig_kwargs.get("suptitle", f"{psr_name} Mass Plots")
+    suptitlefontsize = fig_kwargs.get("suptitlefontsize", 24)
+    suptitleloc = fig_kwargs.get("suptitleloc", (0.25, 1.01))
+    legendloc = fig_kwargs.get("legendloc", (0.45, 0.925))
+    legendfontsize = fig_kwargs.get("legendfontsize", 12)
+    colors = fig_kwargs.get("colors", [f"C{ii}" for ii in range(len(core_list_legend))])
+    wspace = fig_kwargs.get("wspace", 0.1)
+    hspace = fig_kwargs.get("hspace", 0.4)
+    figsize = fig_kwargs.get("figsize", (15, 10))
+
+    if "fig" not in kwargs.keys() and "axes" not in kwargs.keys():
+        fig, axes = plt.subplots(3, 1, figsize=figsize)
+    else:
+        fig = kwargs["fig"]
+        axes = kwargs["axes"]
+
     co_labels = [
         r"Pulsar Mass$~(\mathrm{M}_{\odot})$",
         r"Companion Mass$~(\mathrm{M}_{\odot})$",
-        r"$\mathrm{cos}i$",
+        r"$\mathrm{cos}~i$",
     ]
     for i, coco in enumerate(core_list):
         if isinstance(coco, TimingCore):
@@ -1620,10 +1773,21 @@ def mass_plot(
             print(coco.label)
             print("----------------")
         for j, ax in enumerate(axes):
-            ax.hist(co_bins[j], label=core_list_legend[i], **hist_kwargs)
-            ax.set_xlabel(co_labels[j], fontsize=24)
+            ax.hist(
+                co_bins[j],
+                label=core_list_legend[i],
+                linestyle=linestyles[i],
+                color=colors[i],
+                **hist_kwargs,
+            )
+            if show_xlabel:
+                ax.set_xlabel(co_labels[j], fontsize=24)
+                ax.tick_params(axis="x", labelsize=16, rotation=xlabel_rotation)
+
+            else:
+                ax.set_xticklabels([])
             ax.get_yaxis().set_visible(False)
-            ax.tick_params(axis="x", labelsize=16)
+
             if conf_int:
                 if isinstance(conf_int, (float, int)):
                     if conf_int < 1.0 or conf_int > 99.0:
@@ -1640,54 +1804,148 @@ def mass_plot(
                 if print_conf_int:
                     print(co_labels[j])
                     if j == 2:
+                        med_val = np.arccos(np.median(co_bins[j])) * 180 / np.pi
+                        diff_lower = (
+                            (np.arccos(np.median(co_bins[j])) - np.arccos(upper))
+                            * 180
+                            / np.pi
+                        )
+                        diff_upper = (
+                            (np.arccos(lower) - np.arccos(np.median(co_bins[j])))
+                            * 180
+                            / np.pi
+                        )
                         print(f"Median: {np.arccos(np.median(co_bins[j]))*180/np.pi}")
-                        print(f"Upper: {np.arccos(lower)*180/np.pi}")
                         print(f"Lower: {np.arccos(upper)*180/np.pi}")
+                        print(f"Upper: {np.arccos(lower)*180/np.pi}")
+                        print(
+                            f"Diff Lower: {(np.arccos(np.median(co_bins[j]))-np.arccos(upper))*180/np.pi}"
+                        )
                         print(
                             f"Diff Upper: {(np.arccos(lower)-np.arccos(np.median(co_bins[j])))*180/np.pi}"
                         )
                         print(
-                            f"Diff Lower: {(np.arccos(np.median(co_bins[j]))-np.arccos(upper))*180/np.pi}"
+                            f"Rounded Median: {np.round(med_val,-int(np.floor(np.log10(np.abs(diff_lower)))))} or {np.round(med_val,-int(np.floor(np.log10(np.abs(diff_upper)))))}"
+                        )
+                        print(
+                            f"Rounded Lower: {np.round(diff_lower,-int(np.floor(np.log10(np.abs(diff_lower)))))}"
+                        )
+                        print(
+                            f"Rounded Upper: {np.round(diff_upper,-int(np.floor(np.log10(np.abs(diff_upper)))))}"
                         )
                         print("")
                     else:
-                        print(f"Median: {np.median(co_bins[j])}")
+                        med_val = np.median(co_bins[j])
+                        diff_lower = np.median(co_bins[j]) - lower
+                        diff_upper = upper - np.median(co_bins[j])
+                        print(f"Median: {med_val}")
                         print(f"Lower: {lower}")
                         print(f"Upper: {upper}")
-                        print(f"Diff Lower: {np.median(co_bins[j])-lower}")
-                        print(f"Diff Upper: {upper-np.median(co_bins[j])}")
+                        print(f"Diff Lower: {diff_lower}")
+                        print(f"Diff Upper: {diff_upper}")
+                        print(
+                            f"Rounded Median: {np.round(med_val,-int(np.floor(np.log10(np.abs(diff_lower)))))} or {np.round(med_val,-int(np.floor(np.log10(np.abs(diff_upper)))))}"
+                        )
+                        print(
+                            f"Rounded Lower: {np.round(diff_lower,-int(np.floor(np.log10(np.abs(diff_lower)))))}"
+                        )
+                        print(
+                            f"Rounded Upper: {np.round(diff_upper,-int(np.floor(np.log10(np.abs(diff_upper)))))}"
+                        )
                         print("")
 
-    fig = plt.gcf()
-    allaxes = fig.get_axes()
     if par_sigma:
-        for ax, splt_key in zip(allaxes, ["Mp", "M2", "COSI"]):
-            if par_sigma:
-                if splt_key in par_sigma:
-                    val = par_sigma[splt_key][0]
-                    err = par_sigma[splt_key][1]
-                    fill_space_x = np.linspace(val - err, val + err, 20)
-                    ax.fill_between(
-                        fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
+        for ax, splt_key in zip(axes, ["Mp", "M2", "COSI"]):
+            if splt_key in par_sigma:
+                val = par_sigma[splt_key][0]
+                err = par_sigma[splt_key][1]
+                fill_space_x = np.linspace(val - err, val + err, 20)
+                ax.fill_between(
+                    fill_space_x,
+                    ax.get_ylim()[1],
+                    color="grey",
+                    alpha=0.2,
+                    label="GLS Error",
+                )
+                ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
+            elif splt_key == "COSI" and "SINI" in par_sigma:
+                sin_val, sin_err, _ = par_sigma["SINI"]
+                val = np.longdouble(np.sqrt(1 - sin_val**2))
+                err = np.longdouble(
+                    np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
+                )
+                fill_space_x = np.linspace(val - err, val + err, 20)
+                ax.fill_between(
+                    fill_space_x,
+                    ax.get_ylim()[1],
+                    color="grey",
+                    alpha=0.2,
+                    label="GLS Error",
+                )
+                ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
+            elif splt_key == "Mp":
+                if "SINI" not in par_sigma and "COSI" in par_sigma:
+                    cos_val, cos_err, _ = par_sigma["COSI"]
+                    sin_val = np.longdouble(np.sqrt(1 - cos_val**2))
+                    sin_err = np.longdouble(
+                        np.sqrt((np.abs(cos_val / sin_val)) ** 2 * cos_err**2)
                     )
-                    ax.axvline(val, color="k", linestyle="--")
-                elif splt_key == "COSI" and "SINI" in par_sigma:
-                    sin_val, sin_err, _ = par_sigma["SINI"]
-                    val = np.longdouble(np.sqrt(1 - sin_val**2))
-                    err = np.longdouble(
-                        np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
-                    )
-                    fill_space_x = np.linspace(val - err, val + err, 20)
-                    ax.fill_between(
-                        fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
-                    )
-                    ax.axvline(val, color="k", linestyle="--")
+                else:
+                    sin_val = par_sigma["SINI"][0]
+                    sin_err = par_sigma["SINI"][1]
+
+                mp = mass_pulsar(
+                    par_sigma["PB"][0], par_sigma["A1"][0], sin_val, par_sigma["M2"][0]
+                )
+
+                if sin_val + sin_err > 1.0:
+                    sin_up = 1.0
+                else:
+                    sin_up = sin_val + sin_err
+                mp_err_up = mass_pulsar(
+                    par_sigma["PB"][0] + par_sigma["PB"][1],
+                    par_sigma["A1"][0] + par_sigma["A1"][1],
+                    sin_up,
+                    par_sigma["M2"][0] + par_sigma["M2"][1],
+                )
+
+                if sin_val - sin_err < 0.0:
+                    sin_down = 0.0
+                else:
+                    sin_down = sin_val - sin_err
+
+                if par_sigma["M2"][0] - par_sigma["M2"][1] < 0.0:
+                    m2_down = 0.0
+                else:
+                    m2_down = par_sigma["M2"][0] - par_sigma["M2"][1]
+
+                mp_err_down = mass_pulsar(
+                    par_sigma["PB"][0] - par_sigma["PB"][1],
+                    par_sigma["A1"][0] - par_sigma["A1"][1],
+                    sin_down,
+                    m2_down,
+                )
+                fill_space_x = np.linspace(mp_err_down, mp_err_up, 20)
+                ax.fill_between(
+                    fill_space_x,
+                    ax.get_ylim()[1],
+                    color="grey",
+                    alpha=0.2,
+                    label="GLS Errors",
+                )
+                ax.axvline(mp, color="k", linestyle="--", label="GLS Best Fit Value")
 
     # fig = plt.gcf()
     patches = []
     for jj, lab in enumerate(core_list_legend):
         patches.append(
-            mpl.patches.Patch(color=colors[jj], label=lab)
+            mpl.patches.Patch(
+                color=colors[jj],
+                label=lab,
+                fill=False,
+                linewidth=3,
+                linestyle=linestyles[jj],
+            )
         )  # .split(":")[-1]))
 
     if preliminary:
@@ -1695,14 +1953,20 @@ def mass_plot(
         txt_loc = (0.05, 0.1)
         txt_kwargs = {"fontsize": 165, "alpha": 0.25, "rotation": 30}
         fig.text(txt_loc[0], txt_loc[1], txt, **txt_kwargs)
-    allaxes[0].legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
+
+    if show_legend:
+        fig = plt.gcf()
+        allaxes = fig.get_axes()
+        allaxes[0].legend(handles=patches, loc=legendloc, fontsize=legendfontsize)
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
-    plt.suptitle(
-        suptitle,
-        fontsize=suptitlefontsize,
-        x=suptitleloc[0],
-        y=suptitleloc[1],
-    )
+
+    if show_suptitle:
+        plt.suptitle(
+            suptitle,
+            fontsize=suptitlefontsize,
+            x=suptitleloc[0],
+            y=suptitleloc[1],
+        )
 
 
 ########################################
@@ -1711,15 +1975,11 @@ def geweke_check(chain, burn_frac=None, threshold=0.25):
     """
     Function to check for stationarity of MCMC chain using the Geweke diagnostic from arviz.geweke
 
-    Parameters
-    ============
-    chain -- N-dimensional MCMC posterior chain. Assumes rows = samples, columns = parameters.
-    burn_frac -- Burn-in fraction; Default: None
-    threshold -- Threshold to determine failure of stationarity for given chain; Default: 0.25
+    :param chain: N-dimensional MCMC posterior chain. Assumes rows = samples, columns = parameters.
+    :param burn_frac: Burn-in fraction; Default: None
+    :param threshold: Threshold to determine failure of stationarity for given chain; Default: 0.25
 
-    Returns
-    ============
-    nc_idx -- index of parameters in the chain whose samples fail the Geweke test
+    :return: nc_idx -- index of parameters in the chain whose samples fail the Geweke test
     """
     if burn_frac is not None:
         burn_len = int(chain.shape[0] * burn_frac)
@@ -1765,17 +2025,13 @@ def geweke_plot(arr, threshold=0.25, first=0.1, last=0.5, intervals=10):
     """
     Function to plot the z-score from arviz.geweke with threshold
 
-    Parameters
-    ===========
-    arr -- Input (1-D) array
-    threshold -- Threshold for geweke test; Default: 0.25
-    first -- First fraction of arr; Default: 0.1
-    last -- Last fraction of arr; Default: 0.5
-    intervals -- Number of intervals of `first` fraction of arr to compute z-score
+    :param arr: Input (1-D) array
+    :param threshold: Threshold for geweke test; Default: 0.25
+    :param first: First fraction of arr; Default: 0.1
+    :param last: Last fraction of arr; Default: 0.5
+    :param intervals: Number of intervals of `first` fraction of arr to compute z-score
 
-    Returns
-    ===========
-    Plots the Geweke diagnostic plot. For stationary chains, the z-score should oscillate between
+    :return: Plots the Geweke diagnostic plot. For stationary chains, the z-score should oscillate between
     the `threshold` values, but not exceed it.
     """
     gs = pymc3.geweke(arr, first=first, last=last, intervals=10)
@@ -1797,16 +2053,12 @@ def plot_dist_evolution(arr, nbins=20, fracs=np.array([0.1, 0.2, 0.3, 0.4]), las
     """
     Function to plot histograms of different fractions used in Geweke test
 
-    Parameters
-    ===========
-    arr -- Input (1-D) array
-    nbins -- Number of bins in histograms; Default: 20
-    fracs -- Starting fractions of arr to plot; Default: [0.1, 0.2, 0.3, 0.4]
-    last -- Final fraction of arr to plot; Default: 0.5
+    :param arr: Input (1-D) array
+    :param nbins: Number of bins in histograms; Default: 20
+    :param fracs: Starting fractions of arr to plot; Default: [0.1, 0.2, 0.3, 0.4]
+    :param last: Final fraction of arr to plot; Default: 0.5
 
-    Returns
-    ===========
-    Plots of histograms of given fractions overlayed together.
+    :return: Plots of histograms of given fractions overlayed together.
     """
     fracs = fracs
 
@@ -1840,18 +2092,14 @@ def get_param_acorr(core, burn=0.25, selection="all"):
     """
     Function to get the autocorrelation length for each parameter in a ndim array
 
-    Parameters
-    ==========
-    core -- la_forge.core object
-    burn -- int, optional
+    :param core:  la_forge.core object
+    :param burn: int, optional
         Number of samples burned from beginning of array. Used when calculating
         statistics and plotting histograms. If None, burn is `len(samples)/4`
-    cut_off_idx -- int, optional
+    :param cut_off_idx: int, optional
         Sets end of parameter list to include
 
-    Returns
-    =======
-    Array of autocorrelation lengths for each parameter
+    :return: Array of autocorrelation lengths for each parameter
     """
 
     selected_params = get_param_groups(core, selection=selection)
@@ -1871,18 +2119,14 @@ def trim_array_acorr(arr, burn=None):
     """
     Function to trim an array by the longest autocorrelation length of all parameters in a ndim array
 
-    Parameters
-    ==========
-    arr -- array, optional
+    :param arr: array, optional
         Array that contains samples from an MCMC chain that is samples x param
         in shape.
-    burn -- int, optional
+    :param burn: int, optional
         Number of samples burned from beginning of chain. Used when calculating
         statistics and plotting histograms. If None, burn is `len(samples)/4`.
 
-    Returns
-    =======
-    Thinned array
+    :return: Thinned array
     """
     if burn is None:
         burn = int(0.25 * arr.shape[0])
@@ -1894,20 +2138,16 @@ def trim_array_acorr(arr, burn=None):
 def grubin(data, M=4, burn=0.25, threshold=1.1):
     """
     Gelman-Rubin split R hat statistic to verify convergence.
-
     See section 3.1 of https://arxiv.org/pdf/1903.08008.pdf.
     Values > 1.1 => recommend continuing sampling due to poor convergence.
 
-    Input:
-        data (ndarray): consists of entire chain file
-        pars (list): list of parameters for each column
-        M (integer): number of times to split the chain
-        burn (float): percent of chain to cut for burn-in
-        threshold (float): Rhat value to tell when chains are good
+    :param data (ndarray): consists of entire chain file
+    :param M (integer): number of times to split the chain
+    :param burn (float): percent of chain to cut for burn-in
+    :param threshold (float): Rhat value to tell when chains are good
 
-    Output:
-        Rhat (ndarray): array of values for each index
-        idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
+    :return Rhat (ndarray): array of values for each index
+    :return idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
     """
     burn = int(burn * data.shape[0])  # cut off burn-in
     # data_split = np.split(data[burn:,:-2], M)  # cut off last two columns

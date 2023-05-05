@@ -43,12 +43,12 @@ class TimingHyperModel(HyperModel):
 
     def get_parameter_groups(self):
         groups = []
-        for p in self.models.values():
+        for p in super_model.models.values():
             pta_groups = []
-            pta_groups.extend(get_parameter_groups(p))
-            pta_groups.extend(get_timing_groups(p))
+            pta_groups.extend(h_t.get_parameter_groups(p))
+            pta_groups.extend(h_t.get_timing_groups(p))
             pta_groups.append(
-                group_from_params(
+                h_t.group_from_params(
                     p,
                     [
                         x
@@ -61,13 +61,14 @@ class TimingHyperModel(HyperModel):
                 if not isinstance(grp, (int, np.int64)):
                     groups.append(
                         [
-                            list(self.param_names).index(p.param_names[subgrp])
+                            list(super_model.param_names).index(p.param_names[subgrp])
                             for subgrp in grp
                         ]
                     )
                 else:
-                    groups.append(self.param_names[idx])
-        groups.extend([[len(self.param_names) - 1]])  # nmodel
+                    groups.append(super_model.param_names[grp])
+        groups = list(np.unique(groups))
+        groups.extend([[len(super_model.param_names) - 1]])  # nmodel
 
         return groups
 
@@ -99,6 +100,7 @@ class TimingHyperModel(HyperModel):
         else:
             x0 = [np.array(p.sample()).ravel().tolist() for p in self.models[0].params]
         uniq_params = [str(p) for p in self.models[0].params]
+
         for model in self.models.values():
             param_diffs = np.setdiff1d([str(p) for p in model.params], uniq_params)
             mask = np.array([str(p) in param_diffs for p in model.params])

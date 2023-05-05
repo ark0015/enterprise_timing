@@ -2,8 +2,6 @@ import numpy as np
 import glob, os, sys, pickle, json, inspect
 from collections import OrderedDict
 
-from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
-
 current_path = os.getcwd()
 splt_path = current_path.split("/")
 # top_path_idx = splt_path.index("nanograv")
@@ -13,11 +11,15 @@ top_dir = "/".join(splt_path[0 : top_path_idx + 1])
 
 e_e_path = top_dir + "/enterprise_extensions/"
 noise_path = top_dir + "/pta_sim/pta_sim"
-# e_path = top_dir + "/enterprise/"
+e_path = top_dir + "/enterprise/"
+ptmcmc_path = top_dir + "/PTMCMCSampler"
 
 sys.path.insert(0, noise_path)
 sys.path.insert(0, e_e_path)
-# sys.path.insert(0, e_path)
+sys.path.insert(0, ptmcmc_path)
+sys.path.insert(0, e_path)
+
+from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 import enterprise
 from enterprise.pulsar import Pulsar
@@ -28,6 +30,11 @@ from enterprise.signals import signal_base
 from enterprise.signals import selections
 from enterprise.signals import gp_signals
 
+# from enterprise.pulsar import Pulsar
+# Pulsar("/scratch/ark0015/5yr/par/J1640+2224_NANOGrav_dfg+12_ark_nltm.par","/scratch/ark0015/5yr/tim/J1640+2224_NANOGrav_dfg+12.tim",ephem="DE405",clk=None,drop_pintpsr=False,timing_package="pint",)
+# Pulsar("/scratch/ark0015/9yr/par/J1640+2224_PINT_15yr_9yr_ark_nltm.nb.par","/scratch/ark0015/9yr/tim/J1640+2224_NANOGrav_9yv1.tim",ephem="DE421",clk=None,drop_pintpsr=False,timing_package="pint",)
+# Pulsar("/scratch/ark0015/9yr/par/J1640+2224_NANOGrav_9yv1.ark_nltm.gls.par","/scratch/ark0015/9yr/tim/J1640+2224_NANOGrav_9yv1.tim",ephem="DE421",clk=None,drop_pintpsr=False,timing_package="pint",)
+# Pulsar("/scratch/ark0015/12p5yr/J1640+2224/J1640+2224_NANOGrav_12yv4.ark_nltm.gls.par","/scratch/ark0015/12p5yr/narrowband/tim/J1640+2224_NANOGrav_12yv4.tim",ephem="DE436",clk=None,drop_pintpsr=False,timing_package="pint",)
 
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
@@ -152,6 +159,12 @@ add_bool_arg(
     "Whether to use old tempo2 version of equad (DEFAULT: False)",
     False,
 )
+add_bool_arg(
+    parser,
+    "fact_like",
+    "Whether to do a factorized likelihood run (DEFAULT: False)",
+    False,
+)
 parser.add_argument(
     "--parfile", default="", help="Location of parfile </PATH/TO/FILE/PARFILE.par>"
 )
@@ -162,6 +175,12 @@ parser.add_argument(
     "--timing_package",
     default="tempo2",
     help="Whether to use PINT or Tempo2 (DEFAULT: tempo2)",
+)
+add_bool_arg(
+    parser,
+    "restrict_pulsar_mass",
+    "Whether to have a hard upper limit of 3 M_sun on the pulsar mass (DEFAULT: True)",
+    True,
 )
 
 args = parser.parse_args()
@@ -415,72 +434,102 @@ for par in psr.fitpars:
                 "prior_upper_bound": upper,
             }
 
-    elif par == "SINI" and args.datarelease == "5yr" and args.psr_name == "J1640+2224":
-        # Use the priors from Vigeland and Vallisneri 2014
-        if hasattr(psr, "t2pulsar"):
-            sini_mu = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index("SINI")])
-            sini_err = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index("SINI")])
-        elif hasattr(psr, "model"):
-            sini_mu = np.double(getattr(psr.model, par).value)
-            sini_err = np.double(getattr(psr.model, par).uncertainty_value)
-            print(sini_mu, sini_err)
-        if args.sample_cos:
-            cosi_mu = np.sqrt(1 - sini_mu**2)
-            cosi_err = np.double(
-                np.sqrt((sini_err * sini_mu) ** 2 / (1 - sini_mu**2))
-            )
-            tm_param_dict["COSI"] = {
-                "prior_mu": cosi_mu,
-                "prior_sigma": cosi_err,
-                "prior_lower_bound": 0.0,
-                "prior_upper_bound": 1.0,
-            }
-        else:
-            tm_param_dict["SINI"] = {
-                "prior_mu": sini_mu,
-                "prior_sigma": sini_err,
-                "prior_lower_bound": 0.0,
-                "prior_upper_bound": 1.0,
-            }
-    elif par == "PX" and args.datarelease == "5yr" and args.psr_name == "J1640+2224":
-        # Use the priors from Vigeland and Vallisneri 2014
-        if hasattr(psr, "t2pulsar"):
-            tm_param_dict[par] = {
-                "prior_mu": np.double(
-                    psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]
-                ),
-                "prior_sigma": np.double(
-                    psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
-                ),
-                "prior_type": "dm_dist_px_prior",
-            }
-        elif hasattr(psr, "model"):
-            tm_param_dict[par] = {
-                "prior_mu": np.double(getattr(psr.model, par).value),
-                "prior_sigma": np.double(getattr(psr.model, par).uncertainty_value),
-                "prior_type": "dm_dist_px_prior",
-            }
+    if args.psr_name == "J1640+2224":
+        if par == "SINI" and args.datarelease == "5yr":
+            # Use the priors from Vigeland and Vallisneri 2014
+            if hasattr(psr, "t2pulsar"):
+                sini_mu = np.double(
+                    psr.t2pulsar.vals()[psr.t2pulsar.pars().index("SINI")]
+                )
+                sini_err = np.double(
+                    psr.t2pulsar.errs()[psr.t2pulsar.pars().index("SINI")]
+                )
+            elif hasattr(psr, "model"):
+                sini_mu = np.double(getattr(psr.model, par).value)
+                sini_err = np.double(getattr(psr.model, par).uncertainty_value)
+                print(sini_mu, sini_err)
+            if args.sample_cos:
+                cosi_mu = np.sqrt(1 - sini_mu**2)
+                cosi_err = np.double(
+                    np.sqrt((sini_err * sini_mu) ** 2 / (1 - sini_mu**2))
+                )
+                tm_param_dict["COSI"] = {
+                    "prior_mu": cosi_mu,
+                    "prior_sigma": cosi_err,
+                    "prior_lower_bound": 0.0,
+                    "prior_upper_bound": 1.0,
+                }
+            else:
+                tm_param_dict["SINI"] = {
+                    "prior_mu": sini_mu,
+                    "prior_sigma": sini_err,
+                    "prior_lower_bound": 0.0,
+                    "prior_upper_bound": 1.0,
+                }
+        elif par == "PX" and args.datarelease == "5yr":
+            # Use the priors from Vigeland and Vallisneri 2014
+            if hasattr(psr, "t2pulsar"):
+                tm_param_dict[par] = {
+                    "prior_mu": np.double(
+                        psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]
+                    ),
+                    "prior_sigma": np.double(
+                        psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
+                    ),
+                    "prior_type": "dm_dist_px_prior",
+                }
+            elif hasattr(psr, "model"):
+                tm_param_dict[par] = {
+                    "prior_mu": np.double(getattr(psr.model, par).value),
+                    "prior_sigma": np.double(getattr(psr.model, par).uncertainty_value),
+                    "prior_type": "dm_dist_px_prior",
+                }
 
-    elif par == "M2" and args.datarelease == "5yr" and args.psr_name == "J1640+2224":
-        # Use the priors from Vigeland and Vallisneri 2014
-        if hasattr(psr, "t2pulsar"):
-            tm_param_dict[par] = {
-                "prior_mu": np.double(
-                    psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]
-                ),
-                "prior_sigma": np.double(
-                    psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
-                ),
-                "prior_lower_bound": 0.0,
-                "prior_upper_bound": 10.0,
-            }
-        elif hasattr(psr, "model"):
-            tm_param_dict[par] = {
-                "prior_mu": np.double(getattr(psr.model, par).value),
-                "prior_sigma": np.double(getattr(psr.model, par).uncertainty_value),
-                "prior_lower_bound": 0.0,
-                "prior_upper_bound": 10.0,
-            }
+        elif par == "M2":
+            if args.datarelease == "5yr":
+                # Use the priors from Vigeland and Vallisneri 2014
+                if hasattr(psr, "t2pulsar"):
+                    tm_param_dict[par] = {
+                        "prior_mu": np.double(
+                            psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]
+                        ),
+                        "prior_sigma": np.double(
+                            psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
+                        ),
+                        "prior_lower_bound": 1e-10,
+                        "prior_upper_bound": 10.0,
+                    }
+                elif hasattr(psr, "model"):
+                    tm_param_dict[par] = {
+                        "prior_mu": np.double(getattr(psr.model, par).value),
+                        "prior_sigma": np.double(
+                            getattr(psr.model, par).uncertainty_value
+                        ),
+                        "prior_lower_bound": 1e-10,
+                        "prior_upper_bound": 10.0,
+                    }
+            else:
+                # Use the prior max of Chandrasekar Limit
+                if hasattr(psr, "t2pulsar"):
+                    tm_param_dict[par] = {
+                        "prior_mu": np.double(
+                            psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)]
+                        ),
+                        "prior_sigma": np.double(
+                            psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)]
+                        ),
+                        "prior_lower_bound": 1e-10,
+                        "prior_upper_bound": 1.4,
+                    }
+                elif hasattr(psr, "model"):
+                    tm_param_dict[par] = {
+                        "prior_mu": np.double(getattr(psr.model, par).value),
+                        "prior_sigma": np.double(
+                            getattr(psr.model, par).uncertainty_value
+                        ),
+                        "prior_lower_bound": 1e-10,
+                        "prior_upper_bound": 1.4,
+                    }
 
 if not args.tm_linear and args.tm_var:
     print(
@@ -586,12 +635,32 @@ if args.tm_var and not args.tm_linear:
                 "coefficients": args.coefficients,
             }
         )
+        if args.fact_like:
+            if args.datarelease == "12p5yr":
+                Tspan = 407576851.48121357
+                print(Tspan / (365.25 * 24 * 3600), " yrs")
+            else:
+                raise ValueError("Only have Tspan for 12.5-yr.")
+            model_kwargs.update(
+                {
+                    "factorized_like": True,
+                    "Tspan": Tspan,
+                    "fact_like_gamma": 13.0 / 3,
+                    "gw_components": 5,
+                    "psd": "powerlaw",
+                }
+            )
         # print(model_kwargs)
 
         pta = models.model_singlepsr_noise(psr, **model_kwargs)
 
     psampler = sampler.setup_sampler(
-        pta, outdir=outdir, resume=args.resume, timing=args.incTimingModel
+        pta,
+        outdir=outdir,
+        resume=args.resume,
+        timing=args.incTimingModel,
+        psr=psr,
+        restrict_mass=args.restrict_pulsar_mass,
     )
     with open(outdir + "/orig_timing_pars.pkl", "wb") as fout:
         pickle.dump(psr.tm_params_orig, fout)
@@ -668,7 +737,12 @@ else:
     # set up PTA
     pta = signal_base.PTA([model])
     psampler = sampler.setup_sampler(
-        pta, outdir=outdir, resume=args.resume, timing=args.incTimingModel
+        pta,
+        outdir=outdir,
+        resume=args.resume,
+        timing=args.incTimingModel,
+        psr=psr,
+        restrict_mass=args.restrict_pulsar_mass,
     )
 
 if args.coefficients:
@@ -699,12 +773,23 @@ else:
     else:
         x0 = np.hstack([p.sample() for p in pta.params])
 
-psampler.sample(
-    x0,
-    N,
-    SCAMweight=30,
-    AMweight=15,
-    DEweight=30,
-    writeHotChains=args.writeHotChains,
-    hotChain=args.reallyHotChain,
-)
+if args.restrict_pulsar_mass:
+    psampler.sample(
+        x0,
+        N,
+        SCAMweight=0,
+        AMweight=0,
+        DEweight=0,
+        writeHotChains=args.writeHotChains,
+        hotChain=args.reallyHotChain,
+    )
+else:
+    psampler.sample(
+        x0,
+        N,
+        SCAMweight=20,
+        AMweight=20,
+        DEweight=20,
+        writeHotChains=args.writeHotChains,
+        hotChain=args.reallyHotChain,
+    )

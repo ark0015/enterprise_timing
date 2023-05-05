@@ -1,6 +1,25 @@
 import numpy as np
+import scipy
+
 import glob, os, sys, pickle, json, inspect, copy, string
 from collections import OrderedDict
+
+current_path = os.getcwd()
+splt_path = current_path.split("/")
+# top_path_idx = splt_path.index("nanograv")
+# top_path_idx = splt_path.index("akaiser")
+top_path_idx = splt_path.index("ark0015")
+top_dir = "/".join(splt_path[0 : top_path_idx + 1])
+
+e_e_path = top_dir + "/enterprise_extensions/"
+e_path = top_dir + "/enterprise/"
+ptmcmc_path = top_dir + "/PTMCMCSampler"
+
+sys.path.insert(0, e_e_path)
+sys.path.insert(0, ptmcmc_path)
+sys.path.insert(0, e_path)
+
+from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
 
 import enterprise
 from enterprise.pulsar import Pulsar
@@ -11,36 +30,31 @@ from enterprise.signals import signal_base
 from enterprise.signals import selections
 from enterprise.signals import gp_signals
 
-from PTMCMCSampler.PTMCMCSampler import PTSampler as ptmcmc
-
-current_path = os.getcwd()
-splt_path = current_path.split("/")
-top_path_idx = splt_path.index("nanograv")
-# top_path_idx = splt_path.index("akaiser")
-# top_path_idx = splt_path.index("ark0015")
-top_dir = "/".join(splt_path[0 : top_path_idx + 1])
-
-e_e_path = top_dir + "/enterprise_extensions/"
-noise_path = top_dir + "/pta_sim/pta_sim"
-sys.path.insert(0, noise_path)
-sys.path.insert(0, e_e_path)
 import enterprise_extensions as e_e
 from enterprise_extensions import sampler
 from enterprise_extensions import models
 from enterprise_extensions.sampler import JumpProposal
 from enterprise_extensions.timing import timing_block
 from enterprise_extensions.blocks import channelized_backends
+from enterprise_extensions.hypermodel import HyperModel
 
-from hypermodel_timing import TimingHyperModel
+# from hypermodel_timing import TimingHyperModel
 
-import noise
 import argparse
+
+
+def dm_funk(t, dm1, dm2, DMEPOCH):
+    """Used to refit for DM1 and DM2. t in units of MJD"""
+    # DM(t)=DM+DM1*(t-DMEPOCH)+DM2*(t-DMEPOCH)^2
+    return dm1 * (t - DMEPOCH) + dm2 * (t - DMEPOCH) ** 2
 
 
 def pta_setup(
     psr,
     datarelease,
     psr_name,
+    parfile,
+    dmx_file,
     tm_var=True,
     red_var=False,
     white_var=True,
@@ -55,6 +69,57 @@ def pta_setup(
     Ecorr_gp_basis=False,
     model_kwargs_file="",
 ):
+
+    if os.path.isfile(parfile):
+        parfile = parfile
+        # Load raw parfile to get DMEPOCH
+        DMEPOCH = 0
+        with open(parfile, "r") as f:
+            for line in f.readlines():
+                if "DMEPOCH" in [x for x in line.split()]:
+                    DMEPOCH = np.double(line.split()[-1])
+        if DMEPOCH == 0:
+            raise ValueError(
+                "DMEPOCH not in parfile. Please add it to the parfile so DM1/DM2 fitting can work."
+            )
+        globals()[DMEPOCH] = DMEPOCH
+    else:
+        raise ValueError(f"{parfile} does not exist. Please pick a real parfile.")
+    if os.path.isfile(dmx_file):
+        # Load DMX values
+        dtypes = {
+            "names": (
+                "DMXEP",
+                "DMX_value",
+                "DMX_var_err",
+                "DMXR1",
+                "DMXR2",
+                "DMXF1",
+                "DMXF2",
+                "DMX_bin",
+            ),
+            "formats": ("f4", "f4", "f4", "f4", "f4", "f4", "f4", "U6"),
+        }
+        try:
+            dmx = np.loadtxt(dmx_file, skiprows=4, dtype=dtypes)
+        except:
+            with open(dmx_file, "r") as f:
+                for i in range(4):
+                    dmx_pars = f.readline()
+            dmx_pars = dmx_pars.split(": ")[-1].split("\n")[0].split(" ")
+            dtypes_2 = {}
+            tmp_names = []
+            tmp_formats = []
+            for nam, typ in zip(dtypes["names"], dtypes["formats"]):
+                if nam in dmx_pars:
+                    tmp_names.append(nam)
+                    tmp_formats.append(typ)
+
+            dtypes_2["names"] = tuple(tmp_names)
+            dtypes_2["formats"] = tuple(tmp_formats)
+            dmx = np.loadtxt(dmx_file, skiprows=4, dtype=dtypes_2)
+    else:
+        raise ValueError(f"{dmx_file} does not exist. Please pick a real dmx_file.")
 
     nltm_params = []
     ltm_list = []
@@ -87,59 +152,40 @@ def pta_setup(
         else:
             nltm_params.append(par)
 
-        if par == "PBDOT":
-            pbdot = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
-            pbdot_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
-            print("USING PHYSICAL PBDOT. Val: ", pbdot, "Err: ", pbdot_sigma * 1e-12)
-            lower = pbdot - 500 * pbdot_sigma * 1e-12
-            upper = pbdot + 500 * pbdot_sigma * 1e-12
-            # lower = pbdot - 5 * pbdot_sigma * 1e-12
-            # upper = pbdot + 5 * pbdot_sigma * 1e-12
-            tm_param_dict["PBDOT"] = {
-                "prior_lower_bound": lower,
-                "prior_upper_bound": upper,
-            }
-        elif par == "XDOT":
-            xdot = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
-            xdot_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
-            print("USING PHYSICAL XDOT. Val: ", xdot, "Err: ", xdot_sigma * 1e-12)
-            lower = xdot - 500 * xdot_sigma * 1e-12
-            upper = xdot + 500 * xdot_sigma * 1e-12
-            # lower = xdot - 5 * xdot_sigma * 1e-12
-            # upper = xdot + 5 * xdot_sigma * 1e-12
-            tm_param_dict["XDOT"] = {
-                "prior_lower_bound": lower,
-                "prior_upper_bound": upper,
-            }
-        elif par in ["DM", "DM1", "DM2"] and par not in refit_pars:
-            orig_vals = {p: v for p, v in zip(psr.t2pulsar.pars(), psr.t2pulsar.vals())}
-            orig_errs = {p: e for p, e in zip(psr.t2pulsar.pars(), psr.t2pulsar.errs())}
-            if np.any(np.isnan(psr.t2pulsar.errs())) or np.any(
-                [err == 0.0 for err in psr.t2pulsar.errs()]
-            ):
-                eidxs = np.where(
-                    np.logical_or(
-                        np.isnan(psr.t2pulsar.errs()), psr.t2pulsar.errs() == 0.0
-                    )
-                )[0]
-                psr.t2pulsar.fit()
-                for idx in eidxs:
-                    parr = psr.t2pulsar.pars()[idx]
-                    if parr in ["DM", "DM1", "DM2"]:
-                        refit_pars.append(parr)
-                        parr_val = np.double(psr.t2pulsar.vals()[idx])
-                        parr_sigma = np.double(psr.t2pulsar.errs()[idx])
-                        print(
-                            f"USING REFIT {parr}. Val: ", parr_val, "Err: ", parr_sigma
-                        )
-                        lower = parr_val - 500 * parr_sigma
-                        upper = parr_val + 500 * parr_sigma
-                        tm_param_dict[f"{parr}"] = {
-                            "prior_lower_bound": lower,
-                            "prior_upper_bound": upper,
-                        }
-            psr.t2pulsar.vals(orig_vals)
-            psr.t2pulsar.errs(orig_errs)
+        if par in ["PBDOT", "XDOT"] and hasattr(psr, "t2pulsar"):
+            par_val = np.double(psr.t2pulsar.vals()[psr.t2pulsar.pars().index(par)])
+            par_sigma = np.double(psr.t2pulsar.errs()[psr.t2pulsar.pars().index(par)])
+            if np.log10(par_sigma) > -10.0:
+                print(
+                    f"USING PHYSICAL {par}. Val: ", par_val, "Err: ", par_sigma * 1e-12
+                )
+                lower = par_val - 50 * par_sigma * 1e-12
+                upper = par_val + 50 * par_sigma * 1e-12
+                # lower = pbdot - 5 * pbdot_sigma * 1e-12
+                # upper = pbdot + 5 * pbdot_sigma * 1e-12
+                tm_param_dict[par] = {
+                    "prior_mu": par_val,
+                    "prior_sigma": par_sigma * 1e-12,
+                    "prior_lower_bound": lower,
+                    "prior_upper_bound": upper,
+                }
+
+        elif par in ["DM1", "DM2"] and par not in refit_pars:
+            popt, pcov = scipy.optimize.curve_fit(
+                dm_funk, dmx["DMXEP"], dmx["DMX_value"]
+            )
+            perr = np.sqrt(np.diag(pcov))
+            for ii, parr in enumerate(["DM1", "DM2"]):
+                refit_pars.append(parr)
+                print(f"USING REFIT {parr}. Val:  {popt[ii]}, Err: {perr[ii]}")
+                lower = popt[ii] - 1e4 * perr[ii]
+                upper = popt[ii] + 1e4 * perr[ii]
+                tm_param_dict[f"{parr}"] = {
+                    "prior_mu": popt[ii],
+                    "prior_sigma": perr[ii],
+                    "prior_lower_bound": lower,
+                    "prior_upper_bound": upper,
+                }
     print(tm_param_dict)
     if not tm_linear and tm_var:
         print(
@@ -173,37 +219,82 @@ def pta_setup(
         model_keys = model_args[0][1:]
         model_vals = model_args[3]
         model_kwargs = dict(zip(model_keys, model_vals))
-
         """
         #First Round:
+        """
         """
         red_psd = "powerlaw"
         dm_nondiag_kernel = ["None", "sq_exp", "periodic"]
         dm_sw_gp = [True, False]
         dm_annual = False
         """
-        #Second Round:
+        """
+        #Second Round (Didn't do for J0740):
+        """
+        """
         red_psd = 'powerlaw'
         dm_nondiag_kernel = ['periodic','sq_exp','periodic_rfband','sq_exp_rfband']
-        dm_sw_gp = False #Depends on Round 1
+        dm_sw_gp = [True,False] #Depends on Round 1
         dm_annual = False
         """
         """
-        #Third Round:
-        red_psd = 'powerlaw'
-        #Round 3a
-        dm_nondiag_kernel = ['sq_exp','sq_exp_rfband']
-        #Round 3b
-        dm_nondiag_kernel = ['periodic','periodic_rfband']
-
-        chrom_gp = True
-        chrom_gp_kernel = 'nondiag'
-        chrom_kernels = [None,'periodic','sq_exp']
+        #Third Round (Second for J0740):
         """
+        # red_psd = "powerlaw"
+        # dm_sw_gp = False
+        # dm_annual = False
+        # dm_sw = False
+        # Round 3a
+        # dm_nondiag_kernel = ['sq_exp','sq_exp_rfband']
+        # Round 3b
+        # dm_nondiag_kernel = ['periodic','periodic_rfband']
+        # Almost round 4a
+        # dm_nondiag_kernel = ["periodic", "sq_exp"]
+        # chrom_gps = [True, False]
+        # chrom_gp_kernel = "nondiag"
+        # chrom_kernels = ["periodic", "sq_exp"]
+        """
+        #Fourth Round (Third for J0740):
+        """
+        """
+        red_psd = "powerlaw"
+        dm_sw_gp = False
+        dm_annual = False
+        dm_sw = False
+        # Round 3a
+        # dm_nondiag_kernel = ['sq_exp','sq_exp_rfband']
+        # Round 3b
+        # dm_nondiag_kernel = ['periodic','periodic_rfband']
+        # Almost round 4a
+        dm_nondiag_kernel = ["periodic","periodic_rfband", "sq_exp","sq_exp_rfband"]
+        chrom_gps = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic", "sq_exp"]
+        """
+        """
+        #Fifth Round (Fourth for J0740):
+        """
+
+        red_psd = "powerlaw"
+        dm_sw_gp = False
+        dm_annual = False
+        dm_sw = False
+        # Round 3a
+        # dm_nondiag_kernel = ['sq_exp','sq_exp_rfband']
+        # Round 3b
+        # dm_nondiag_kernel = ['periodic','periodic_rfband']
+        # Almost round 4a
+        dm_nondiag_kernel = [
+            "sq_exp_rfband",
+            "periodic_rfband",
+        ]
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic", "sq_exp"]
 
         # Create list of pta models for our model selection
         # nmodels = len(dm_annuals) * len(dm_nondiag_kernel)
-        nmodels = 5
+        nmodels = 4
         # nmodels = len(chrom_indices) * len(dm_nondiag_kernel)
         mod_index = np.arange(nmodels)
 
@@ -212,10 +303,10 @@ def pta_setup(
         model_labels = []
         ct = 0
         for dm in dm_nondiag_kernel:
-            # for chrom_gp in chrom_gps:
-            # for chrom_kernel in chrom_kernels:
             # for add_cusp in dm_cusp:
-            for dm_sw in dm_sw_gp:
+            # for dm_sw in dm_sw_gp:
+            # for chrom_gp in chrom_gps:
+            for chrom_kernel in chrom_kernels:
                 if dm == "None":
                     dm_var = False
                 else:
@@ -231,15 +322,14 @@ def pta_setup(
                         "ltm_list": ltm_list,
                         "tm_param_dict": tm_param_dict,
                         "tm_prior": tm_prior,
-                        "normalize_prior_bound": 500.0,
+                        "normalize_prior_bound": 50.0,
                         "fit_remaining_pars": fit_remaining_pars,
                         "red_var": red_var,
-                        # "noisedict": noisedict,
+                        "noisedict": None,
                         "white_vary": white_var,
                         "is_wideband": wideband,
                         "use_dmdata": wideband,
                         "dmjump_var": wideband,
-                        # "coefficients": coefficients,
                         "dm_var": dm_var,
                         "dmgp_kernel": "nondiag",
                         "psd": red_psd,
@@ -248,25 +338,30 @@ def pta_setup(
                         "dm_sw_gp": dm_sw,
                         "dm_annual": dm_annual,
                         "swgp_basis": "powerlaw",
-                        #'chrom_gp_kernel':chrom_gp_kernel,
-                        #'chrom_kernel':chrom_kernel,
-                        # chrom_gp':chrom_gp,
+                        "chrom_gp_kernel": chrom_gp_kernel,
+                        "chrom_kernel": chrom_kernel,
+                        "chrom_gp": chrom_gp,
                         #'chrom_idx':chrom_index,
                         #'dm_cusp':dm_cusp,
                         #'dm_cusp_idx':cusp_idxs[:num_cusp],
                         #'num_dm_cusps':num_cusp,
                         #'dm_cusp_sign':cusp_signs[:num_cusp]
+                        "dm_df": None,
+                        "chrom_df": None,
                     }
                 )
-                if dm == "None" and dm_sw:
-                    pass
-                else:
-                    # Instantiate single pulsar noise model
-                    ptas[ct] = models.model_singlepsr_noise(psr, **kwargs)
-                    # Add labels and kwargs to save for posterity and plotting.
-                    model_labels.append([string.ascii_uppercase[ct], dm, dm_sw])
-                    model_dict.update({str(ct): kwargs})
-                    ct += 1
+                # if dm == "None" and dm_sw:
+                #    pass
+                # if not chrom_gp and chrom_kernel == "sq_exp":
+                #    pass
+                # else:
+                # Instantiate single pulsar noise model
+                ptas[ct] = models.model_singlepsr_noise(psr, **kwargs)
+                # Add labels and kwargs to save for posterity and plotting.
+                # model_labels.append([string.ascii_uppercase[ct], dm, dm_sw])
+                model_labels.append([string.ascii_uppercase[ct], dm, chrom_kernel])
+                model_dict.update({str(ct): kwargs})
+                ct += 1
 
     changed_params_list = []
     for j, key in enumerate(model_dict["0"].keys()):
@@ -288,4 +383,4 @@ def pta_setup(
     print(model_labels)
 
     # Instantiate a collection of models
-    return TimingHyperModel(ptas)
+    return HyperModel(ptas)
