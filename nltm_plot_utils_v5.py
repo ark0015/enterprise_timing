@@ -838,10 +838,10 @@ def plot_all_param_overlap(
                     val = par_sigma[splt_key][0]
                     err = par_sigma[splt_key][1]
                     fill_space_x = np.linspace(val - err, val + err, 20)
-                    ax.fill_between(
+                    gls_fill = ax.fill_between(
                         fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
                     )
-                    ax.axvline(val, color="k", linestyle="--")
+                    gls_line = ax.axvline(val, color="k", linestyle="--")
                 elif splt_key == "COSI" and "SINI" in par_sigma:
                     sin_val, sin_err, _ = par_sigma["SINI"]
                     val = np.longdouble(np.sqrt(1 - sin_val**2))
@@ -849,10 +849,10 @@ def plot_all_param_overlap(
                         np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
                     )
                     fill_space_x = np.linspace(val - err, val + err, 20)
-                    ax.fill_between(
+                    gls_fill = ax.fill_between(
                         fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
                     )
-                    ax.axvline(val, color="k", linestyle="--")
+                    gls_line = ax.axvline(val, color="k", linestyle="--")
 
                 if conf_int:
                     if isinstance(conf_int, (float, int)):
@@ -878,6 +878,10 @@ def plot_all_param_overlap(
                                 )
         else:
             fig = plt.gcf()
+
+        if par_sigma:
+            patches.append(gls_line)
+            patches.append(gls_fill)
         patches = []
         for jj, lab in enumerate(core_list_legend):
             patches.append(
@@ -1245,10 +1249,10 @@ def fancy_plot_all_param_overlap(
                     val = par_sigma[splt_key][0]
                     err = par_sigma[splt_key][1]
                     fill_space_x = np.linspace(val - err, val + err, 20)
-                    axis.fill_between(
+                    gls_fill = axis.fill_between(
                         fill_space_x, axis.get_ylim()[1], color="grey", alpha=0.2
                     )
-                    axis.axvline(val, color="k", linestyle="--")
+                    gls_line = axis.axvline(val, color="k", linestyle="--")
                 elif splt_key == "COSI" and "SINI" in par_sigma:
                     sin_val, sin_err, _ = par_sigma["SINI"]
                     val = np.longdouble(np.sqrt(1 - sin_val**2))
@@ -1256,10 +1260,10 @@ def fancy_plot_all_param_overlap(
                         np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
                     )
                     fill_space_x = np.linspace(val - err, val + err, 20)
-                    axis.fill_between(
+                    gls_fill = axis.fill_between(
                         fill_space_x, axis.get_ylim()[1], color="grey", alpha=0.2
                     )
-                    axis.axvline(val, color="k", linestyle="--")
+                    gls_line = axis.axvline(val, color="k", linestyle="--")
 
             if conf_int:
                 if isinstance(conf_int, (float, int)):
@@ -1282,6 +1286,10 @@ def fancy_plot_all_param_overlap(
                                 alpha=0.1,
                             )
         axis.set_yticks([])
+
+    if par_sigma:
+        patches.append(gls_line)
+        patches.append(gls_fill)
     patches = []
     for jj, lab in enumerate(core_list_legend):
         patches.append(
@@ -1860,14 +1868,14 @@ def mass_plot(
                 val = par_sigma[splt_key][0]
                 err = par_sigma[splt_key][1]
                 fill_space_x = np.linspace(val - err, val + err, 20)
-                ax.fill_between(
+                gls_fill = ax.fill_between(
                     fill_space_x,
                     ax.get_ylim()[1],
                     color="grey",
                     alpha=0.2,
                     label="GLS Error",
                 )
-                ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
+                gls_line = ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
             elif splt_key == "COSI" and "SINI" in par_sigma:
                 sin_val, sin_err, _ = par_sigma["SINI"]
                 val = np.longdouble(np.sqrt(1 - sin_val**2))
@@ -1875,14 +1883,14 @@ def mass_plot(
                     np.sqrt((np.abs(sin_val / val)) ** 2 * sin_err**2)
                 )
                 fill_space_x = np.linspace(val - err, val + err, 20)
-                ax.fill_between(
+                gls_fill = ax.fill_between(
                     fill_space_x,
                     ax.get_ylim()[1],
                     color="grey",
                     alpha=0.2,
                     label="GLS Error",
                 )
-                ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
+                gls_line = ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
             elif splt_key == "Mp":
                 if "SINI" not in par_sigma and "COSI" in par_sigma:
                     cos_val, cos_err, _ = par_sigma["COSI"]
@@ -1926,14 +1934,14 @@ def mass_plot(
                     m2_down,
                 )
                 fill_space_x = np.linspace(mp_err_down, mp_err_up, 20)
-                ax.fill_between(
+                gls_fill = ax.fill_between(
                     fill_space_x,
                     ax.get_ylim()[1],
                     color="grey",
                     alpha=0.2,
                     label="GLS Errors",
                 )
-                ax.axvline(mp, color="k", linestyle="--", label="GLS Best Fit Value")
+                gls_line = ax.axvline(mp, color="k", linestyle="--", label="GLS Best Fit Value")
 
     # fig = plt.gcf()
     patches = []
@@ -1948,6 +1956,9 @@ def mass_plot(
             )
         )  # .split(":")[-1]))
 
+    if par_sigma:
+        patches.append(gls_line)
+        patches.append(gls_fill)
     if preliminary:
         txt = "PRELIMINARY"
         txt_loc = (0.05, 0.1)

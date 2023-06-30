@@ -576,9 +576,9 @@ else:
     nmodels = 1
     """
     ###########################
-    # J1600 12.5yr - Most Complex Single Round
+    # J2043 12.5yr - Most Complex Single Round
     ###########################
-    if args.psr_name == "J1600-3053" and args.datarelease == "12p5yr":
+    if args.psr_name == "J2043+1711" and args.datarelease == "12p5yr":
         ###########################
         # Round 1
         ###########################
@@ -593,7 +593,40 @@ else:
         add_expdip = False  # Not Used
         dm_expdip_tmin = 55500  # Not Used
         dm_expdip_tmax = 56500  # Not Used
-        dm_sw_gp = False
+        nmodels = 1
+        """
+        ###########################
+        # Round 2
+        ###########################
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['sq_exp']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["sq_exp"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
+    ###########################
+    # J1600 12.5yr - Most Complex Single Round
+    ###########################
+    if args.psr_name == "J1600-3053" and args.datarelease == "12p5yr":
+        ###########################
+        # Round 1
+        ###########################
+        """
+        red_psd = "powerlaw"
+        dm_sw = True
+        dm_annual = False
+        dm_nondiag_kernel = ['periodic_rfband']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic_rfband"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
         nmodels = 1
         """
         ###########################
@@ -615,6 +648,7 @@ else:
         ###########################
         # Round 3
         ###########################
+        """
         red_psd = "powerlaw"
         dm_sw = True
         dm_annual = False
@@ -626,9 +660,42 @@ else:
         dm_expdip_tmin = 55500  # Not Used
         dm_expdip_tmax = 56500  # Not Used
         nmodels = 1
+        """
+        ###########################
+        # DM Fit Round 2
+        ###########################
+
+        red_psd = "powerlaw"
+        dm_sw = True
+        dm_annual = False
+        dm_nondiag_kernel = ['periodic']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
+
     # J1640 12.5yr - Most Complex Single Round
     ###########################
     if args.psr_name == "J1640+2224" and args.datarelease == "12p5yr":
+        ###########################
+        # Round 1
+        ###########################
+        """
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['periodic_rfband']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic_rfband"]
+        add_expdip = True
+        dm_expdip_tmin = 55500
+        dm_expdip_tmax = 56500
+        nmodels = 1
+        """
         ###########################
         # Round 2
         ###########################
@@ -644,6 +711,22 @@ else:
         """
         ###########################
         # Round 3
+        ###########################
+        """
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ["sq_exp"]
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["sq_exp"]
+        nmodels = 1
+        add_expdip = True
+        dm_expdip_tmin = 55500
+        dm_expdip_tmax = 56500
+        """
+        ###########################
+        # DM Fit Round 2
         ###########################
         red_psd = "powerlaw"
         dm_sw = False
@@ -661,6 +744,22 @@ else:
     ###########################
     if args.psr_name == "J0740+6620" and args.datarelease == "cfr+19":
         ###########################
+        # Round 1
+        ###########################
+        """
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['periodic_rfband']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic_rfband"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
+        """
+        ###########################
         # Round 2
         ###########################
         """
@@ -676,6 +775,7 @@ else:
         ###########################
         # Round 3
         ###########################
+        
         red_psd = "powerlaw"
         dm_sw = False
         dm_annual = False
@@ -687,10 +787,43 @@ else:
         add_expdip = False  # Not Used
         dm_expdip_tmin = 55500  # Not Used
         dm_expdip_tmax = 56500  # Not Used
+        
+        ###########################
+        # DM Fit Round 2
+        ###########################
+        """
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['periodic']
+        chrom_gp = False
+        chrom_gp_kernel = "nondiag"  # Not Used
+        chrom_kernels = ["periodic_rfband"]  # Not Used
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
+        """
     ###########################
-    # J0740 FCP+21 - Most Complex Single Round 2
+    # J0740 FCP+21 - Most Complex Single Round
     ###########################
     if args.psr_name == "J0740+6620" and args.datarelease == "fcp+21":
+        ###########################
+        # Round 1
+        ###########################
+        """
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['periodic_rfband']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic_rfband"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
+        """
         ###########################
         # Round 2
         ###########################
@@ -723,6 +856,7 @@ else:
         ###########################
         # Round 4
         ###########################
+        """
         red_psd = "powerlaw"
         dm_sw = False
         dm_annual = False
@@ -734,6 +868,37 @@ else:
         add_expdip = False  # Not Used
         dm_expdip_tmin = 55500  # Not Used
         dm_expdip_tmax = 56500  # Not Used
+        """
+        ###########################
+        # DM Fit Round 2
+        ###########################
+        """
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['periodic']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["periodic"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
+        """
+        ###########################
+        # DM Fit Round 3
+        ###########################
+        red_psd = "powerlaw"
+        dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['sq_exp']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["sq_exp"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
 
     # Create list of pta models for our model selection
     mod_index = np.arange(nmodels)
@@ -884,6 +1049,11 @@ else:
                         x0_list.append(np.double(tm_param_dict[p_name]["prior_mu"]))
                     else:
                         x0_list.append(np.double(psr.tm_params_orig[p_name][0]))
+            elif "dm_model" in p.name:
+                if "mu" in str(p):
+                    x0_list.append(float(str(p).split("(")[1].split(",")[0].split("=")[-1]))
+                else:
+                    x0_list.append(p.sample())
             else:
                 x0_list.append(p.sample())
         x0 = np.asarray(x0_list)
