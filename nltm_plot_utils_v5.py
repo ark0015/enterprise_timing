@@ -1,24 +1,28 @@
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
-import numpy as np
-import astropy.units as u
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 
-import pandas as pd
+import astropy.units as u
 import corner
-
+import la_forge
+import la_forge.diagnostics as dg
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 # import acor
-from emcee.autocorr import integrated_time, AutocorrError
+from emcee.autocorr import AutocorrError, integrated_time
+from la_forge.core import Core, TimingCore
+from pint.residuals import Residuals
+from scipy.constants import golden_ratio
 
 # import pymc3
 
-import la_forge
-import la_forge.diagnostics as dg
-from la_forge.core import TimingCore, Core
 
-from pint.residuals import Residuals
+def get_fig_size(width=15, scale=1.0):
+    # width = 3.36 # 242 pt
+    base_size = np.array([1, 1 / scale / golden_ratio])
+    fig_size = width * base_size
+    return fig_size
 
 
 def get_pardict(psrs, datareleases):
@@ -584,7 +588,7 @@ def get_new_PAL2_params(psr_name, core):
     return new_PAL2_params
 
 
-def get_dmgp_timescales(psr_name, core, ci_int = 68.3):
+def get_dmgp_timescales(psr_name, core, ci_int=68.3):
     plot_params = get_param_groups(core, selection="dm_chrom")
     lower_q = (100 - ci_int) / 2
     for dm_par in plot_params["par"]:
@@ -594,16 +598,20 @@ def get_dmgp_timescales(psr_name, core, ci_int = 68.3):
                     f"{np.median(10**core.get_param(dm_par,tm_convert=True))} days"
                 )
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(10**core.get_param(dm_par,tm_convert=True),q=lower_q)} days, lower",
-                     f"{np.percentile(10**core.get_param(dm_par,tm_convert=True),q=100-lower_q)} days, higher"]
+                    [
+                        f"{np.percentile(10**core.get_param(dm_par,tm_convert=True),q=lower_q)} days, lower",
+                        f"{np.percentile(10**core.get_param(dm_par,tm_convert=True),q=100-lower_q)} days, higher",
+                    ]
                 )
             else:
                 plot_params["conv_med_val"].append(
                     f"{np.median(10**core.get_param(dm_par))} days"
                 )
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(10**core.get_param(dm_par),q=lower_q)} days, lower",
-                     f"{np.percentile(10**core.get_param(dm_par),q=100-lower_q)} days, higher"]
+                    [
+                        f"{np.percentile(10**core.get_param(dm_par),q=lower_q)} days, lower",
+                        f"{np.percentile(10**core.get_param(dm_par),q=100-lower_q)} days, higher",
+                    ]
                 )
         elif "log10_p" in dm_par:
             if isinstance(core, TimingCore):
@@ -611,16 +619,20 @@ def get_dmgp_timescales(psr_name, core, ci_int = 68.3):
                     f"{np.median(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400)} days"
                 )
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400,q=lower_q)} days, lower",
-                     f"{np.percentile(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400,q=100-lower_q)} days, higher"]
+                    [
+                        f"{np.percentile(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400,q=lower_q)} days, lower",
+                        f"{np.percentile(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400,q=100-lower_q)} days, higher",
+                    ]
                 )
             else:
                 plot_params["conv_med_val"].append(
                     f"{np.median(10**core.get_param(dm_par)*3.16e7/86400)} days"
                 )
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(10**core.get_param(dm_par)*3.16e7/86400,q=lower_q)} days, lower",
-                     f"{np.percentile(10**core.get_param(dm_par)*3.16e7/86400,q=100-lower_q)} days, higher"]
+                    [
+                        f"{np.percentile(10**core.get_param(dm_par)*3.16e7/86400,q=lower_q)} days, lower",
+                        f"{np.percentile(10**core.get_param(dm_par)*3.16e7/86400,q=100-lower_q)} days, higher",
+                    ]
                 )
         elif "n_earth" in dm_par:
             if isinstance(core, TimingCore):
@@ -628,41 +640,45 @@ def get_dmgp_timescales(psr_name, core, ci_int = 68.3):
                     f"{np.median(core.get_param(dm_par,tm_convert=True))} SW electron density"
                 )
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(core.get_param(dm_par,tm_convert=True),q=lower_q)} SW electron density, lower",
-                     f"{np.percentile(core.get_param(dm_par,tm_convert=True),q=100-lower_q)} SW electron density, higher"]
+                    [
+                        f"{np.percentile(core.get_param(dm_par,tm_convert=True),q=lower_q)} SW electron density, lower",
+                        f"{np.percentile(core.get_param(dm_par,tm_convert=True),q=100-lower_q)} SW electron density, higher",
+                    ]
                 )
             else:
                 plot_params["conv_med_val"].append(
                     f"{np.median(core.get_param(dm_par))} SW electron density"
                 )
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(core.get_param(dm_par),q=lower_q)} SW electron density, lower",
-                     f"{np.percentile(core.get_param(dm_par),q=100-lower_q)} SW electron density, higher"]
+                    [
+                        f"{np.percentile(core.get_param(dm_par),q=lower_q)} SW electron density, lower",
+                        f"{np.percentile(core.get_param(dm_par),q=100-lower_q)} SW electron density, higher",
+                    ]
                 )
         else:
             if isinstance(core, TimingCore):
                 if "log10" in dm_par:
-                    new_val = 10**core.get_param(dm_par,tm_convert=True)
+                    new_val = 10 ** core.get_param(dm_par, tm_convert=True)
                 else:
-                    new_val = core.get_param(dm_par,tm_convert=True)
-                plot_params["conv_med_val"].append(
-                    f"{np.median(new_val)}"
-                )
+                    new_val = core.get_param(dm_par, tm_convert=True)
+                plot_params["conv_med_val"].append(f"{np.median(new_val)}")
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(new_val,q=lower_q)} lower",
-                     f"{np.percentile(new_val,q=100-lower_q)} higher"]
+                    [
+                        f"{np.percentile(new_val,q=lower_q)} lower",
+                        f"{np.percentile(new_val,q=100-lower_q)} higher",
+                    ]
                 )
             else:
                 if "log10" in dm_par:
-                    new_val = 10**core.get_param(dm_par)
+                    new_val = 10 ** core.get_param(dm_par)
                 else:
                     new_val = core.get_param(dm_par)
-                plot_params["conv_med_val"].append(
-                    f"{np.median(new_val)}"
-                )
+                plot_params["conv_med_val"].append(f"{np.median(new_val)}")
                 plot_params["conv_CI"].append(
-                    [f"{np.percentile(new_val,q=lower_q)} lower",
-                     f"{np.percentile(new_val,q=100-lower_q)} higher"]
+                    [
+                        f"{np.percentile(new_val,q=lower_q)} lower",
+                        f"{np.percentile(new_val,q=100-lower_q)} higher",
+                    ]
                 )
     return plot_params
 
@@ -853,6 +869,9 @@ def plot_all_param_overlap(
                         fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2
                     )
                     gls_line = ax.axvline(val, color="k", linestyle="--")
+                else:
+                    gls_line = None
+                    gls_fill = None
 
                 if conf_int:
                     if isinstance(conf_int, (float, int)):
@@ -879,10 +898,10 @@ def plot_all_param_overlap(
         else:
             fig = plt.gcf()
 
-        if par_sigma:
+        patches = []
+        if par_sigma and gls_line is not None and gls_fill is not None:
             patches.append(gls_line)
             patches.append(gls_fill)
-        patches = []
         for jj, lab in enumerate(core_list_legend):
             patches.append(
                 mpl.patches.Patch(
@@ -1060,11 +1079,14 @@ def get_fancy_labels(labels):
     fancy_labels = []
     for lab in labels:
         if lab == "A1":
-            fancy_labels.append(r"$x-\overline{x}$ (lt-s)")
+            fancy_labels.append(r"$x-\overline{x}$")
+            # fancy_labels.append(r"$x$ (lt-s)")
         elif lab == "XDOT" or lab == "A1DOT":
-            fancy_labels.append(r"$\dot{x}-\overline{\dot{x}}$ (lt-s~s^{-1})")
+            # fancy_labels.append(r"$\dot{x}-\overline{\dot{x}}$ (lt-s~$\mathrm{s}^{-1}$)")
+            fancy_labels.append(r"$\dot{x}$ (lt-s~$\mathrm{s}^{-1}$)")
         elif lab == "OM":
-            fancy_labels.append(r"$\omega-\overline{\omega}$ (degrees)")
+            fancy_labels.append(r"$\omega-\overline{\omega}$")
+            fancy_labels.append(r"$\omega$ (degrees)")
         elif lab == "ECC":
             fancy_labels.append(r"$e-\overline{e}$")
         elif lab == "EPS1":
@@ -1072,10 +1094,11 @@ def get_fancy_labels(labels):
         elif lab == "EPS2":
             fancy_labels.append(r"$\epsilon_{2}-\overline{\epsilon_{2}}$")
         elif lab == "M2":
-            fancy_labels.append(r"$m_{\mathrm{c}}-\overline{m_{\mathrm{c}}}$")
+            # fancy_labels.append(r"$m_{\mathrm{c}}-\overline{m_{\mathrm{c}}}$")
+            fancy_labels.append(r"$m_{\mathrm{c}}$ ($\mathrm{M}_{\odot}$)")
         elif lab == "COSI":
-            fancy_labels.append(r"$\mathrm{cos}i-\overline{\mathrm{cos}i}$")
-            # fancy_labels.append(r'$\mathrm{cos}i$')
+            # fancy_labels.append(r"$\mathrm{cos}i-\overline{\mathrm{cos}i}$")
+            fancy_labels.append(r"$\mathrm{cos}i$")
         elif lab == "PB":
             fancy_labels.append(r"$P_{\mathrm{b}}-\overline{P_{\mathrm{b}}}$")
             # fancy_labels.append(r'$P_{\mathrm{b}}-\overline{P_{\mathrm{b}}}$ (days)')
@@ -1158,7 +1181,7 @@ def fancy_plot_all_param_overlap(
 
     if not hist_kwargs:
         hist_kwargs = {
-            "linewidth": 3.0,
+            "linewidth": 4.0,
             "density": True,
             "histtype": "step",
             "bins": 40,
@@ -1264,6 +1287,9 @@ def fancy_plot_all_param_overlap(
                         fill_space_x, axis.get_ylim()[1], color="grey", alpha=0.2
                     )
                     gls_line = axis.axvline(val, color="k", linestyle="--")
+                else:
+                    gls_line = None
+                    gls_fill = None
 
             if conf_int:
                 if isinstance(conf_int, (float, int)):
@@ -1287,10 +1313,10 @@ def fancy_plot_all_param_overlap(
                             )
         axis.set_yticks([])
 
-    if par_sigma:
+    patches = []
+    if par_sigma and gls_line is not None and gls_fill is not None:
         patches.append(gls_line)
         patches.append(gls_fill)
-    patches = []
     for jj, lab in enumerate(core_list_legend):
         patches.append(
             mpl.patches.Patch(
@@ -1445,7 +1471,9 @@ def get_param_groups(core, selection="kep"):
         if "dm" in selection_list and param not in plot_params["par"]:
             if split_param in dm_pars:
                 plot_params["par"].append(param)
-                plot_params["title"].append(split_param)  # (" ").join(param.split("_")[-2:]))
+                plot_params["title"].append(
+                    split_param
+                )  # (" ").join(param.split("_")[-2:]))
         if "dmgp" in selection_list and param not in plot_params["par"]:
             if ("_").join(param.split("_")[1:]) in dmgp_pars:
                 plot_params["par"].append(param)
@@ -1607,6 +1635,282 @@ def corner_plots(
     plt.show()
 
 
+def plot_coeffs_comparison_corner(
+    psr_name, psr_12p5yr, use_core, coeffs, pars, log=True, plt_inset=True, save=False
+):
+    hist2d_kwargs = {
+        "plot_density": False,
+        "no_fill_contours": True,
+        "data_kwargs": {"alpha": 0.02},
+    }
+    corner_label_kwargs = {"fontsize": 20, "rotation": 0}
+
+    mapping = {fitpar: idx for idx, fitpar in enumerate(psr_12p5yr.fitpars)}
+    ltm_pararr_dict = {}
+    nltm_pararr_dict = {}
+    for par in pars:
+    plt_coeffs = [
+        coeff[f"{psr_name}_linear_timing_model_coefficients"][mapping[par]]
+        for coeff in coeffs
+    ]
+
+    nltm_pararr = use_core.get_param(
+        f"{psr_name}_timing_model_{par}", to_burn=False, tm_convert=True
+    )
+    truth_val = use_core.tm_pars_orig[par][0]
+    truth_err = use_core.tm_pars_orig[par][1]
+    ltm_pararr = plt_coeffs + np.double(truth_val)
+
+    fig, ax = plt.subplots(figsize=get_fig_size(20))
+
+    ax.hist(
+        ltm_pararr,
+        density=True,
+        histtype="step",
+        bins=30,
+        linewidth=5.0,
+        color="C1",
+        label="Analytically Marginalized TM",
+        log=log,
+    )
+    ax.hist(
+        nltm_pararr,
+        density=True,
+        histtype="step",
+        bins=30,
+        linewidth=5.0,
+        color="C0",
+        label="Numerically Marginalized TM",
+        log=log,
+    )
+    ax.axvline(
+        np.double(truth_val),
+        linewidth=3.0,
+        linestyle="--",
+        color="C3",
+        label="GLS Best Fit Value",
+    )
+
+    fill_space_x = np.linspace(
+        np.double(truth_val) - np.double(truth_err),
+        np.double(truth_val) + np.double(truth_err),
+        20,
+    )
+
+    if plt_inset:
+        # left, bottom, width, height
+        ax2 = fig.add_axes([0.15, 0.55, 0.25, 0.25])
+        ax2.hist(
+            ltm_pararr,
+            density=True,
+            histtype="step",
+            bins=30,
+            linewidth=5.0,
+            color="C1",
+            label="Analytically Marginalized TM",
+            log=log,
+        )
+        # ax2.hist(nltm_pararr,density=True,histtype='step',bins=30,linewidth=5.,color='C0',label='Numerically Marginalized TM', log=log)
+        ax2.axvline(
+            np.double(truth_val),
+            linewidth=3.0,
+            linestyle="--",
+            color="C3",
+            label="GLS Best Fit Value",
+        )
+        ax2.fill_between(
+            fill_space_x, ax2.get_ylim()[1], color="grey", alpha=0.2, label="GLS Error"
+        )
+        ax2xticks = ax2.get_xticks()
+        # ax2xticks = [4.2646714988, 4.2646714990, 4.2646714992, 4.2646714994, 4.2646714996, 4.2646714998, 4.2646715000, 4.2646715002]
+        ax2xticks = [0.00129, 0.0013, 0.00131, 0.00132]
+        ax2.set_xticks(ax2xticks)
+        # ax2round_digit = 10
+        ax2round_digit = np.min([len(str(x).split(".")[-1]) for x in ax2xticks]) + 2
+        xlabels2 = get_correct_xtick_labels(ax2xticks, ax2round_digit)
+        ax2.set_xticklabels([x for x in xlabels2])
+        ax2.set_xticklabels([f"{np.round(x, 7)}" for x in ax2xticks])
+        ax2.tick_params(axis="x", labelrotation=75)
+        if log:
+            ax2.set_ylabel("Log Normalized Posterior")
+        else:
+            ax2.get_yaxis().set_visible(False)
+        ax2.set_xlim([np.min(ax2xticks), np.max(ax2xticks)])
+
+    ax.fill_between(
+        fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2, label="GLS Error"
+    )
+
+    ax.legend(
+        # fontsize=8
+    )
+
+    axxticks = ax.get_xticks()
+    # axxticks = [-4.0e-5, -3.0e-5, -2.0e-5, -1.0e-5, 0., 1.0e-5, 2.0e-5]
+    ax.set_xticks(axxticks)
+    axround_digit = np.min([len(str(x).split(".")[-1]) for x in axxticks]) + 1
+    xlabels = get_correct_xtick_labels(axxticks, axround_digit)
+    # xlabels = [fr"${x}\times10^{-5}$" for x in np.arange(-4, 0, 1)]
+    # xlabels.append(0)
+    # xlabels.extend([fr"${x}\times10^{-5}$" for x in np.arange(1, 3, 1)])
+
+    ax.set_xticklabels([x for x in xlabels])
+
+    ax.tick_params(axis="x", labelrotation=75)
+
+    # plt.suptitle(f"12.5 Year {psr_name}, {par}")
+    # ax.set_xlabel(nltm.get_fancy_labels([par])[0])
+    ax.set_xlabel("DMX 0001")
+    # ax.set_xlim([-3.5e-5, 2e-5])
+    # ax.set_xlabel(r"$\lambda$")
+    if log:
+        ax.set_ylabel("Log Normalized Posterior")
+    else:
+        ax.get_yaxis().set_visible(False)
+
+    # plt.subplots_adjust(wspace=.05)
+    if save:
+        plt.savefig(
+            f"{top_dir}/enterprise_timing/Figures/{psr_name}/{psr_name}_nltm_vs_ltm_coeffs_{par}.png",
+            dpi=150,
+            bbox_inches="tight",
+        )
+    plt.show()
+
+
+def plot_coeffs_comparison(
+    psr_name, psr_12p5yr, use_core, coeffs, par, log=True, plt_inset=True, save=False
+):
+    mapping = {fitpar: idx for idx, fitpar in enumerate(psr_12p5yr.fitpars)}
+    plt_coeffs = [
+        coeff[f"{psr_name}_linear_timing_model_coefficients"][mapping[par]]
+        for coeff in coeffs
+    ]
+
+    nltm_pararr = use_core.get_param(
+        f"{psr_name}_timing_model_{par}", to_burn=False, tm_convert=True
+    )
+    truth_val = use_core.tm_pars_orig[par][0]
+    truth_err = use_core.tm_pars_orig[par][1]
+    ltm_pararr = plt_coeffs + np.double(truth_val)
+
+    fig, ax = plt.subplots(figsize=get_fig_size(20))
+
+    ax.hist(
+        ltm_pararr,
+        density=True,
+        histtype="step",
+        bins=30,
+        linewidth=5.0,
+        color="C1",
+        label="Analytically Marginalized TM",
+        log=log,
+    )
+    ax.hist(
+        nltm_pararr,
+        density=True,
+        histtype="step",
+        bins=30,
+        linewidth=5.0,
+        color="C0",
+        label="Numerically Marginalized TM",
+        log=log,
+    )
+    ax.axvline(
+        np.double(truth_val),
+        linewidth=3.0,
+        linestyle="--",
+        color="C3",
+        label="GLS Best Fit Value",
+    )
+
+    fill_space_x = np.linspace(
+        np.double(truth_val) - np.double(truth_err),
+        np.double(truth_val) + np.double(truth_err),
+        20,
+    )
+
+    if plt_inset:
+        # left, bottom, width, height
+        ax2 = fig.add_axes([0.15, 0.55, 0.25, 0.25])
+        ax2.hist(
+            ltm_pararr,
+            density=True,
+            histtype="step",
+            bins=30,
+            linewidth=5.0,
+            color="C1",
+            label="Analytically Marginalized TM",
+            log=log,
+        )
+        # ax2.hist(nltm_pararr,density=True,histtype='step',bins=30,linewidth=5.,color='C0',label='Numerically Marginalized TM', log=log)
+        ax2.axvline(
+            np.double(truth_val),
+            linewidth=3.0,
+            linestyle="--",
+            color="C3",
+            label="GLS Best Fit Value",
+        )
+        ax2.fill_between(
+            fill_space_x, ax2.get_ylim()[1], color="grey", alpha=0.2, label="GLS Error"
+        )
+        ax2xticks = ax2.get_xticks()
+        # ax2xticks = [4.2646714988, 4.2646714990, 4.2646714992, 4.2646714994, 4.2646714996, 4.2646714998, 4.2646715000, 4.2646715002]
+        ax2xticks = [0.00129, 0.0013, 0.00131, 0.00132]
+        ax2.set_xticks(ax2xticks)
+        # ax2round_digit = 10
+        ax2round_digit = np.min([len(str(x).split(".")[-1]) for x in ax2xticks]) + 2
+        xlabels2 = get_correct_xtick_labels(ax2xticks, ax2round_digit)
+        ax2.set_xticklabels([x for x in xlabels2])
+        ax2.set_xticklabels([f"{np.round(x, 7)}" for x in ax2xticks])
+        ax2.tick_params(axis="x", labelrotation=75)
+        if log:
+            ax2.set_ylabel("Log Normalized Posterior")
+        else:
+            ax2.get_yaxis().set_visible(False)
+        ax2.set_xlim([np.min(ax2xticks), np.max(ax2xticks)])
+
+    ax.fill_between(
+        fill_space_x, ax.get_ylim()[1], color="grey", alpha=0.2, label="GLS Error"
+    )
+
+    ax.legend(
+        # fontsize=8
+    )
+
+    axxticks = ax.get_xticks()
+    # axxticks = [-4.0e-5, -3.0e-5, -2.0e-5, -1.0e-5, 0., 1.0e-5, 2.0e-5]
+    ax.set_xticks(axxticks)
+    axround_digit = np.min([len(str(x).split(".")[-1]) for x in axxticks]) + 1
+    xlabels = get_correct_xtick_labels(axxticks, axround_digit)
+    # xlabels = [fr"${x}\times10^{-5}$" for x in np.arange(-4, 0, 1)]
+    # xlabels.append(0)
+    # xlabels.extend([fr"${x}\times10^{-5}$" for x in np.arange(1, 3, 1)])
+
+    ax.set_xticklabels([x for x in xlabels])
+
+    ax.tick_params(axis="x", labelrotation=75)
+
+    # plt.suptitle(f"12.5 Year {psr_name}, {par}")
+    # ax.set_xlabel(nltm.get_fancy_labels([par])[0])
+    ax.set_xlabel("DMX 0001")
+    # ax.set_xlim([-3.5e-5, 2e-5])
+    # ax.set_xlabel(r"$\lambda$")
+    if log:
+        ax.set_ylabel("Log Normalized Posterior")
+    else:
+        ax.get_yaxis().set_visible(False)
+
+    # plt.subplots_adjust(wspace=.05)
+    if save:
+        plt.savefig(
+            f"{top_dir}/enterprise_timing/Figures/{psr_name}/{psr_name}_nltm_vs_ltm_coeffs_{par}.png",
+            dpi=150,
+            bbox_inches="tight",
+        )
+    plt.show()
+
+
 def mass_pulsar(PB, A1, SINI, M2, errors={}):
     """
     Computes the companion mass from the Keplerian mass function. This
@@ -1677,7 +1981,7 @@ def mass_plot(
 
     hist_kwargs.update(
         {
-            "linewidth": hist_kwargs.get("linewidth", 3.0),
+            "linewidth": hist_kwargs.get("linewidth", 4.0),
             "density": hist_kwargs.get("density", True),
             "histtype": hist_kwargs.get("histtype", "step"),
             "bins": hist_kwargs.get("bins", 40),
@@ -1875,7 +2179,9 @@ def mass_plot(
                     alpha=0.2,
                     label="GLS Error",
                 )
-                gls_line = ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
+                gls_line = ax.axvline(
+                    val, color="k", linestyle="--", label="GLS Best Fit Value"
+                )
             elif splt_key == "COSI" and "SINI" in par_sigma:
                 sin_val, sin_err, _ = par_sigma["SINI"]
                 val = np.longdouble(np.sqrt(1 - sin_val**2))
@@ -1890,7 +2196,9 @@ def mass_plot(
                     alpha=0.2,
                     label="GLS Error",
                 )
-                gls_line = ax.axvline(val, color="k", linestyle="--", label="GLS Best Fit Value")
+                gls_line = ax.axvline(
+                    val, color="k", linestyle="--", label="GLS Best Fit Value"
+                )
             elif splt_key == "Mp":
                 if "SINI" not in par_sigma and "COSI" in par_sigma:
                     cos_val, cos_err, _ = par_sigma["COSI"]
@@ -1941,7 +2249,12 @@ def mass_plot(
                     alpha=0.2,
                     label="GLS Errors",
                 )
-                gls_line = ax.axvline(mp, color="k", linestyle="--", label="GLS Best Fit Value")
+                gls_line = ax.axvline(
+                    mp, color="k", linestyle="--", label="GLS Best Fit Value"
+                )
+            else:
+                gls_line = None
+                gls_fill = None
 
     # fig = plt.gcf()
     patches = []
@@ -1956,7 +2269,7 @@ def mass_plot(
             )
         )  # .split(":")[-1]))
 
-    if par_sigma:
+    if par_sigma and gls_line is not None and gls_fill is not None:
         patches.append(gls_line)
         patches.append(gls_fill)
     if preliminary:
@@ -2047,15 +2360,15 @@ def geweke_plot(arr, threshold=0.25, first=0.1, last=0.5, intervals=10):
     """
     gs = pymc3.geweke(arr, first=first, last=last, intervals=10)
 
-    pl.plot(gs[:, 0], gs[:, 1], marker="o", ls="-")
+    plt.plot(gs[:, 0], gs[:, 1], marker="o", ls="-")
 
-    pl.axhline(threshold)
-    pl.axhline(-1 * threshold)
+    plt.axhline(threshold)
+    plt.axhline(-1 * threshold)
 
-    pl.ylabel("Z-score")
-    pl.xlabel("No. of samples")
+    plt.ylabel("Z-score")
+    plt.xlabel("No. of samples")
 
-    pl.show()
+    plt.show()
 
     return None
 
@@ -2080,11 +2393,11 @@ def plot_dist_evolution(arr, nbins=20, fracs=np.array([0.1, 0.2, 0.3, 0.4]), las
 
         subset = arr[: int(ff * arr.shape[0])]
 
-        pl.hist(
+        plt.hist(
             subset, nbins, histtype="step", density=True, label="f=0.0--{}".format(ff)
         )
 
-    pl.hist(
+    plt.hist(
         last_subset,
         nbins,
         histtype="step",
@@ -2092,9 +2405,9 @@ def plot_dist_evolution(arr, nbins=20, fracs=np.array([0.1, 0.2, 0.3, 0.4]), las
         label="f={}--1.0".format(last),
     )
 
-    pl.legend(loc="best", ncol=3)
+    plt.legend(loc="best", ncol=3)
 
-    pl.show()
+    plt.show()
 
     return None
 

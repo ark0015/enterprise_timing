@@ -598,8 +598,24 @@ else:
         ###########################
         # Round 2
         ###########################
+        """
         red_psd = "powerlaw"
         dm_sw = False
+        dm_annual = False
+        dm_nondiag_kernel = ['sq_exp']
+        chrom_gp = True
+        chrom_gp_kernel = "nondiag"
+        chrom_kernels = ["sq_exp"]
+        add_expdip = False  # Not Used
+        dm_expdip_tmin = 55500  # Not Used
+        dm_expdip_tmax = 56500  # Not Used
+        nmodels = 1
+        """
+        ###########################
+        # Round 3
+        ###########################
+        red_psd = "powerlaw"
+        dm_sw = True
         dm_annual = False
         dm_nondiag_kernel = ['sq_exp']
         chrom_gp = True
@@ -931,6 +947,7 @@ else:
                     "fit_remaining_pars": args.fit_remaining_pars,
                     "dmepoch":DMEPOCH,
                     "dmx_data":dmx,
+                    "dm_quadfit_prior":"fixed",
                     "red_var": args.red_var,
                     "noisedict": noisedict,
                     "white_vary": args.white_var,
